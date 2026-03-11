@@ -1,26 +1,82 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Outfit:wght@400;600;800&display=swap');
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-color: #050505;
+  --bg-gradient: radial-gradient(circle at top right, #110d1f, #050505 60%);
+  --accent-cyan: #00ffff;
+  --accent-purple: #b538ff;
+  --accent-pink: #ff2a85;
+  --text-main: #f0f0f0;
+  --text-muted: #888888;
+  
+  --glass-bg: rgba(25, 25, 30, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body {
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  background: var(--bg-color);
+  background-image: var(--bg-gradient);
+  color: var(--text-main);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  overflow: hidden;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Glassmorphism utility classes for reusability */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 16px;
+}
+
+/* Animations & Glow Effects */
+@keyframes neon-pulse {
+  0% { text-shadow: 0 0 5px var(--accent-cyan), 0 0 10px var(--accent-cyan); }
+  50% { text-shadow: 0 0 10px var(--accent-cyan), 0 0 20px var(--accent-cyan), 0 0 30px var(--accent-cyan); }
+  100% { text-shadow: 0 0 5px var(--accent-cyan), 0 0 10px var(--accent-cyan); }
+}
+
+.text-glow {
+  animation: neon-pulse 3s infinite alternate;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+}
+
+@keyframes dopamine-surge {
+  0% { box-shadow: 0 0 0 0 rgba(255, 42, 133, 0.4); }
+  70% { box-shadow: 0 0 0 20px rgba(255, 42, 133, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 42, 133, 0); }
+}
+
+.dopamine-hit {
+  animation: dopamine-surge 1s ease-out;
 }
