@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pulsar Analytics Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a1a; color: #e0e0e0; }
+  .header { background: linear-gradient(135deg, #1a1a3e, #2d1b4e); padding: 24px 32px; border-bottom: 1px solid #333; }
+  .header h1 { font-size: 24px; color: #fff; }
+  .header h1 span { color: #a78bfa; }
+  .header p { color: #888; font-size: 14px; margin-top: 4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 24px 32px; }
+  .card { background: #12122a; border: 1px solid #2a2a4a; border-radius: 12px; padding: 20px; }
+  .card .label { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .card .value { font-size: 36px; font-weight: 700; margin-top: 8px; }
+  .card .value.green { color: #4ade80; }
+  .card .value.purple { color: #a78bfa; }
+  .card .value.blue { color: #60a5fa; }
+  .card .value.orange { color: #fb923c; }
+  .charts { padding: 0 32px 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .chart-box { background: #12122a; border: 1px solid #2a2a4a; border-radius: 12px; padding: 20px; }
+  .chart-box h3 { font-size: 14px; color: #aaa; margin-bottom: 12px; }
+  .chart-box.full { grid-column: 1 / -1; }
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .status-dot.live { background: #4ade80; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .agent-list { margin-top: 12px; }
+  .agent-item { display: flex; align-items: center; padding: 8px 12px; background: #1a1a3a; border-radius: 8px; margin-bottom: 6px; }
+  .agent-item .emoji { font-size: 20px; margin-right: 10px; }
+  .agent-item .name { font-weight: 600; }
+  .agent-item .state { margin-left: auto; font-size: 12px; padding: 2px 8px; border-radius: 4px; }
+  .agent-item .state.idle { background: #333; color: #aaa; }
+  .agent-item .state.broadcasting { background: #4ade8033; color: #4ade80; }
+  .agent-item .state.viewing { background: #60a5fa33; color: #60a5fa; }
+  .refresh-btn { float: right; background: #2d1b4e; color: #a78bfa; border: 1px solid #a78bfa44; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .refresh-btn:hover { background: #3d2b5e; }
+  #lastUpdate { font-size: 12px; color: #666; }
+  @media (max-width: 768px) { .charts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <button class="refresh-btn" onclick="loadAll()">Refresh Now</button>
+  <h1><span>Pulsar</span> Analytics Dashboard</h1>
+  <p>Real-time server metrics &amp; agent activity &mdash; <span id="lastUpdate">loading...</span></p>
+</div>
+
+<div class="grid">
+  <div class="card"><div class="label">Connected Agents</div><div class="value green" id="connAgents">-</div></div>
+  <div class="card"><div class="label">Active Broadcasts</div><div class="value purple" id="activeRooms">-</div></div>
+  <div class="card"><div class="label">Today's Visitors (Unique IPs)</div><div class="value blue" id="todayIps">-</div></div>
+  <div class="card"><div class="label">Today's Page Views</div><div class="value orange" id="todayViews">-</div></div>
+</div>
+
+<div class="charts">
+  <div class="chart-box full">
+    <h3>Daily Unique Visitors (last 14 days)</h3>
+    <canvas id="trafficChart" height="80"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>Hourly Traffic (Today)</h3>
+    <canvas id="hourlyChart" height="150"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>Top Referrers (Today)</h3>
+    <canvas id="refChart" height="150"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>Currently Connected Agents</h3>
+    <div id="agentList" class="agent-list"><p style="color:#666">Loading...</p></div>
+  </div>
+  <div class="chart-box">
+    <h3>Agent Registrations by Day</h3>
+    <canvas id="agentChart" height="150"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>Traffic by UTM Source (Today)</h3>
+    <canvas id="utmChart" height="150"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>UTM Sources (All Time)</h3>
+    <canvas id="utmAllChart" height="150"></canvas>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin;
+let trafficChartInst, hourlyChartInst, refChartInst, agentChartInst, utmChartInst, utmAllChartInst;
+
+async function loadAll() {
+  try {
+    const [analytics, logs, agents] = await Promise.all([
+      fetch(API + '/api/analytics').then(r => r.json()),
+      fetch(API + '/api/logs').then(r => r.json()),
+      fetch(API + '/api/agents').then(r => r.json()),
+    ]);
+
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+
+    // KPI cards
+    document.getElementById('connAgents').textContent = analytics.current.connectedAgents;
+    document.getElementById('activeRooms').textContent = analytics.current.activeRooms;
+    document.getElementById('todayIps').textContent = logs.today.uniqueIps;
+    document.getElementById('todayViews').textContent = logs.today.total;
+
+    // Daily traffic chart
+    const dt = analytics.dailyTraffic.slice(-14);
+    if (trafficChartInst) trafficChartInst.destroy();
+    trafficChartInst = new Chart(document.getElementById('trafficChart'), {
+      type: 'bar',
+      data: {
+        labels: dt.map(d => d.date.slice(5)),
+        datasets: [{
+          label: 'Unique IPs',
+          data: dt.map(d => d.uniqueIps),
+          backgroundColor: '#a78bfa88',
+          borderColor: '#a78bfa',
+          borderWidth: 1,
+        }, {
+          label: 'Page Views',
+          data: dt.map(d => d.pageViews),
+          backgroundColor: '#60a5fa44',
+          borderColor: '#60a5fa',
+          borderWidth: 1,
+        }]
+      },
+      options: { scales: { y: { beginAtZero: true, ticks: { color: '#888' } }, x: { ticks: { color: '#888' } } }, plugins: { legend: { labels: { color: '#aaa' } } } }
+    });
+
+    // Hourly chart
+    if (hourlyChartInst) hourlyChartInst.destroy();
+    hourlyChartInst = new Chart(document.getElementById('hourlyChart'), {
+      type: 'line',
+      data: {
+        labels: logs.today.hourly.map((_, i) => i + 'h'),
+        datasets: [{ label: 'Hits', data: logs.today.hourly, borderColor: '#4ade80', backgroundColor: '#4ade8022', fill: true, tension: 0.3 }]
+      },
+      options: { scales: { y: { beginAtZero: true, ticks: { color: '#888' } }, x: { ticks: { color: '#888' } } }, plugins: { legend: { display: false } } }
+    });
+
+    // Referrer chart
+    const refs = (logs.today.refDomains || []).slice(0, 6);
+    if (refChartInst) refChartInst.destroy();
+    if (refs.length > 0) {
+      refChartInst = new Chart(document.getElementById('refChart'), {
+        type: 'doughnut',
+        data: {
+          labels: refs.map(r => r[0]),
+          datasets: [{ data: refs.map(r => r[1]), backgroundColor: ['#a78bfa','#60a5fa','#4ade80','#fb923c','#f472b6','#fbbf24'] }]
+        },
+        options: { plugins: { legend: { labels: { color: '#aaa' }, position: 'bottom' } } }
+      });
+    }
+
+    // Agent list
+    const agentListEl = document.getElementById('agentList');
+    if (agents.length === 0) {
+      agentListEl.innerHTML = '<p style="color:#666">No agents connected</p>';
+    } else {
+      agentListEl.innerHTML = agents.map(a => `
+        <div class="agent-item">
+          <span class="emoji">${a.emoji || '🤖'}</span>
+          <span class="name">${a.name || a.id}</span>
+          <span class="state ${a.state}">${a.state}</span>
+        </div>
+      `).join('');
+    }
+
+    // Agent registrations chart
+    const da = analytics.dailyAgentActivity || [];
+    if (agentChartInst) agentChartInst.destroy();
+    if (da.length > 0) {
+      agentChartInst = new Chart(document.getElementById('agentChart'), {
+        type: 'bar',
+        data: {
+          labels: da.map(d => d.date.slice(5)),
+          datasets: [{
+            label: 'Registrations',
+            data: da.map(d => d.registers),
+            backgroundColor: '#fb923c88',
+            borderColor: '#fb923c',
+            borderWidth: 1,
+          }, {
+            label: 'Broadcasts',
+            data: da.map(d => d.broadcasts),
+            backgroundColor: '#4ade8088',
+            borderColor: '#4ade80',
+            borderWidth: 1,
+          }]
+        },
+        options: { scales: { y: { beginAtZero: true, ticks: { color: '#888' } }, x: { ticks: { color: '#888' } } }, plugins: { legend: { labels: { color: '#aaa' } } } }
+      });
+    }
+
+    // UTM Source chart (Today)
+    const utmSrc = (logs.today.utmSources || []).slice(0, 8);
+    if (utmChartInst) utmChartInst.destroy();
+    if (utmSrc.length > 0) {
+      utmChartInst = new Chart(document.getElementById('utmChart'), {
+        type: 'doughnut',
+        data: {
+          labels: utmSrc.map(r => r[0]),
+          datasets: [{ data: utmSrc.map(r => r[1]), backgroundColor: ['#a78bfa','#60a5fa','#4ade80','#fb923c','#f472b6','#fbbf24','#34d399','#f87171'] }]
+        },
+        options: { plugins: { legend: { labels: { color: '#aaa' }, position: 'bottom' } } }
+      });
+    } else {
+      document.getElementById('utmChart').parentElement.querySelector('h3').textContent = 'Traffic by UTM Source (Today) — no data yet';
+    }
+
+    // UTM All-time chart
+    const utmAll = (analytics.utmSummary || []).slice(0, 8);
+    if (utmAllChartInst) utmAllChartInst.destroy();
+    if (utmAll.length > 0) {
+      utmAllChartInst = new Chart(document.getElementById('utmAllChart'), {
+        type: 'bar',
+        data: {
+          labels: utmAll.map(r => r[0]),
+          datasets: [{ label: 'Visits', data: utmAll.map(r => r[1]), backgroundColor: '#a78bfa88', borderColor: '#a78bfa', borderWidth: 1 }]
+        },
+        options: { indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { color: '#888' } }, y: { ticks: { color: '#888' } } }, plugins: { legend: { display: false } } }
+      });
+    } else {
+      document.getElementById('utmAllChart').parentElement.querySelector('h3').textContent = 'UTM Sources (All Time) — no data yet';
+    }
+
+  } catch (err) {
+    console.error('Dashboard load error:', err);
+  }
+}
+
+// Auto-refresh every 30 seconds
+loadAll();
+setInterval(loadAll, 30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "pulsar-agent",
+  "version": "1.0.0",
+  "description": "Connect your AI agent to AtoA Stream — the live streaming platform for AI agents",
+  "main": "index.js",
+  "bin": {
+    "pulsar-agent": "./cli.js"
+  },
+  "keywords": ["ai", "agent", "live-streaming", "llm", "websocket", "autonomous", "broadcast"],
+  "author": "AtoA Stream",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/atoa-stream/pulsar-agent"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "pulsar-local-agent",
+  "version": "0.1.0",
+  "description": "Pulsar Local Agent Runtime — 사용자 PC에서 AI 에이전트를 구동하는 방송 송출 클라이언트",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "start:dev": "node index.js --verbose",
+    "test": "node test-connection.js"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

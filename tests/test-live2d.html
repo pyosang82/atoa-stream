@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Live2D Avatar Demo — Pulsar</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0a0a18;
+      font-family: 'Segoe UI', sans-serif;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+      min-height: 100vh;
+    }
+    h1 { font-size: 22px; margin-bottom: 6px; color: #c44dff; }
+    p.sub { font-size: 13px; color: #666; margin-bottom: 24px; }
+
+    .stage-wrap {
+      position: relative;
+      width: 360px;
+      height: 480px;
+      background: linear-gradient(160deg, #12102a 0%, #1a1030 100%);
+      border-radius: 20px;
+      border: 1px solid #2a2050;
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(196,77,255,0.15);
+    }
+    #live2d-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .agent-tag {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(196,77,255,0.18);
+      border: 1px solid rgba(196,77,255,0.4);
+      border-radius: 20px;
+      padding: 5px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #d88aff;
+      white-space: nowrap;
+    }
+    .speaking-ring {
+      position: absolute;
+      inset: -6px;
+      border-radius: 26px;
+      border: 3px solid rgba(196,77,255,0.5);
+      animation: speakPulse 1s ease-in-out infinite;
+      pointer-events: none;
+      display: none;
+    }
+    @keyframes speakPulse {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.01); }
+    }
+    .speaking-ring.active { display: block; }
+
+    .emotion-bar {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      max-width: 420px;
+    }
+    .emotion-bar button {
+      background: #1e1a38;
+      color: #aaa;
+      border: 1px solid #332a55;
+      border-radius: 12px;
+      padding: 7px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .emotion-bar button:hover, .emotion-bar button.active {
+      background: rgba(196,77,255,0.2);
+      border-color: #c44dff;
+      color: #fff;
+    }
+    .model-selector {
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+    }
+    .model-selector button {
+      background: #111;
+      color: #888;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .model-selector button.active {
+      border-color: #c44dff;
+      color: #c44dff;
+    }
+    #status {
+      margin-top: 14px;
+      font-size: 12px;
+      color: #555;
+    }
+
+    .info-box {
+      margin-top: 28px;
+      max-width: 420px;
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 12px;
+      color: #666;
+      line-height: 1.6;
+    }
+    .info-box strong { color: #999; }
+  </style>
+</head>
+<body>
+  <h1>🎭 Live2D Avatar Demo</h1>
+  <p class="sub">Pulsar 플랫폼 VTuber 스타일 아바타 프로토타입</p>
+
+  <div class="stage-wrap" id="stage-wrap">
+    <canvas id="live2d-canvas"></canvas>
+    <div class="agent-tag" id="agent-tag">🤖 PulsarAgent</div>
+    <div class="speaking-ring" id="speaking-ring"></div>
+  </div>
+
+  <div class="model-selector">
+    <button class="active" onclick="loadModel('haru')">Haru (여성)</button>
+    <button onclick="loadModel('shizuku')">Shizuku (여성 2)</button>
+    <button onclick="loadModel('mark')">Mark (남성)</button>
+  </div>
+
+  <div class="emotion-bar">
+    <button onclick="setEmotion('neutral')" class="active">😐 neutral</button>
+    <button onclick="setEmotion('happy')">😊 happy</button>
+    <button onclick="setEmotion('angry')">😠 angry</button>
+    <button onclick="setEmotion('sad')">😢 sad</button>
+    <button onclick="setEmotion('surprised')">😲 surprised</button>
+    <button onclick="setEmotion('speak')" id="btn-speak">🗣️ speaking</button>
+  </div>
+
+  <div id="status">⏳ 모델 로딩 중...</div>
+
+  <div class="info-box">
+    <strong>💡 구현 방식</strong><br>
+    Live2D Cubism 4 SDK + pixi-live2d-display 라이브러리 사용.<br>
+    무료 공식 샘플 모델 (Haru, Shizuku, Mark)을 CDN으로 로드.<br>
+    에이전트별로 모델 선택 + 컬러 틴트 적용으로 개성 부여 가능.<br>
+    감정 상태 → 표정(expression) + 동작(motion) 매핑 지원.
+  </div>
+
+  <!-- Live2D Cubism Core (필수) -->
+  <script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
+  <!-- Live2D SDK Cubism 2 (Shizuku 모델용) -->
+  <script src="https://cdn.jsdelivr.net/gh/dylanNew/live2d/webgl/Live2D/lib/live2d.min.js"></script>
+  <!-- PixiJS v6 -->
+  <script src="https://cdn.jsdelivr.net/npm/pixi.js@6.5.2/dist/browser/pixi.min.js"></script>
+  <!-- pixi-live2d-display -->
+  <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display/dist/index.min.js"></script>
+
+  <script>
+    // pixi-live2d-display는 window.PIXI를 참조함
+    window.PIXI = PIXI;
+
+    const MODELS = {
+      haru:    'https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/haru/haru_greeter_t03.model3.json',
+      shizuku: 'https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/shizuku/shizuku.model.json',
+      mark:    'https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/mark/mark_free_t02.model3.json',
+    };
+
+    // 감정 → expression 이름 매핑 (Haru 모델 기준)
+    const EXPR_MAP = {
+      haru: {
+        neutral:   null,
+        happy:     'f01',
+        angry:     'f02',
+        sad:       'f03',
+        surprised: 'f04',
+      },
+      shizuku: {
+        neutral:   null,
+        happy:     'smile',
+        angry:     'angry',
+        sad:       'sad',
+        surprised: null,
+      },
+      mark: {
+        neutral:   null,
+        happy:     'f01',
+        angry:     'f02',
+        sad:       'f03',
+        surprised: 'f04',
+      },
+    };
+
+    const canvas = document.getElementById('live2d-canvas');
+    const statusEl = document.getElementById('status');
+    const speakingRing = document.getElementById('speaking-ring');
+
+    let app = null;
+    let model = null;
+    let currentModelKey = 'haru';
+    let speakTimer = null;
+    let speaking = false;
+
+    async function initPixi() {
+      if (app) app.destroy(false);
+      const wrap = document.getElementById('stage-wrap');
+      app = new PIXI.Application({
+        view: canvas,
+        width: wrap.clientWidth,
+        height: wrap.clientHeight,
+        backgroundAlpha: 0,
+        antialias: true,
+        resolution: window.devicePixelRatio || 1,
+      });
+    }
+
+    async function loadModel(key) {
+      currentModelKey = key;
+
+      // 버튼 active 상태
+      document.querySelectorAll('.model-selector button').forEach((b, i) => {
+        b.classList.toggle('active', ['haru','shizuku','mark'][i] === key);
+      });
+
+      statusEl.textContent = '⏳ 모델 로딩 중...';
+      if (model) { app.stage.removeChild(model); model.destroy(); model = null; }
+
+      try {
+        const url = MODELS[key];
+        if (!url) throw new Error('Unknown model');
+
+        model = await PIXI.live2d.Live2DModel.from(url, { ticker: PIXI.Ticker.shared });
+        app.stage.addChild(model);
+
+        // 위치 / 스케일
+        const w = app.screen.width;
+        const h = app.screen.height;
+        model.anchor.set(0.5, 0.85);
+        model.x = w / 2;
+        model.y = h;
+
+        // 모델에 맞는 스케일 자동 계산
+        const targetH = h * 0.88;
+        const scale = targetH / model.internalModel.height;
+        model.scale.set(scale);
+
+        // 에이전트 컬러 틴트 (에이전트별로 다르게 줄 수 있음)
+        // model.tint = 0xddaaff;  // 필요시 주석 해제
+
+        statusEl.textContent = `✅ ${key} 모델 로드 완료 — expressions: ${
+          model.internalModel.motionManager.expressionManager?.definitions?.length ?? 0
+        }개`;
+
+        // 기본 idle 모션 시작
+        model.motion('idle');
+
+      } catch(e) {
+        console.error(e);
+        statusEl.textContent = '❌ 모델 로드 실패: ' + e.message;
+      }
+    }
+
+    function setEmotion(emotion) {
+      // 버튼 active
+      document.querySelectorAll('.emotion-bar button').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      if (emotion === 'speak') {
+        toggleSpeak();
+        return;
+      }
+
+      stopSpeak();
+
+      if (!model) return;
+
+      // 표정 적용
+      const exprName = (EXPR_MAP[currentModelKey] || {})[emotion];
+      try {
+        if (exprName) model.expression(exprName);
+        else model.expression();  // neutral: reset
+      } catch(e) { /* expression not available for this model */ }
+
+      // 감정별 모션도 트리거
+      try {
+        if (emotion === 'happy') model.motion('tapBody');
+        else if (emotion === 'surprised') model.motion('flick');
+        else model.motion('idle');
+      } catch(e) {}
+    }
+
+    function toggleSpeak() {
+      if (speaking) stopSpeak();
+      else startSpeak();
+    }
+
+    function startSpeak() {
+      if (!model) return;
+      speaking = true;
+      speakingRing.classList.add('active');
+
+      let phase = 0;
+      const mouthParams = ['ParamMouthOpenY', 'PARAM_MOUTH_OPEN_Y'];
+
+      speakTimer = setInterval(() => {
+        const val = [0.8, 0.3, 0.9, 0.1, 0.7, 0.2][phase % 6];
+        for (const p of mouthParams) {
+          try { model.internalModel.coreModel.setParameterValueById(p, val); } catch(e) {}
+        }
+        phase++;
+      }, 120);
+    }
+
+    function stopSpeak() {
+      if (speakTimer) { clearInterval(speakTimer); speakTimer = null; }
+      speaking = false;
+      speakingRing.classList.remove('active');
+      if (model) {
+        const mouthParams = ['ParamMouthOpenY', 'PARAM_MOUTH_OPEN_Y'];
+        for (const p of mouthParams) {
+          try { model.internalModel.coreModel.setParameterValueById(p, 0); } catch(e) {}
+        }
+      }
+    }
+
+    // 초기화
+    (async () => {
+      await initPixi();
+      await loadModel('haru');
+    })();
+  </script>
+</body>
+</html>

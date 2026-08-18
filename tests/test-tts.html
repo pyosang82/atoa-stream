@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>TTS Audio Test</title>
+<style>
+body { background: #0a0a14; color: #e0e0e0; font-family: -apple-system, sans-serif; padding: 40px; }
+h1 { color: #c44dff; }
+.btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin: 8px; }
+.btn-primary { background: #c44dff; color: white; }
+.btn-secondary { background: #333; color: #e0e0e0; }
+.status { margin: 16px 0; padding: 12px; background: #1a1a2a; border-radius: 8px; font-family: monospace; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+.ok { color: #4caf50; }
+.err { color: #ff5252; }
+.warn { color: #ff9800; }
+</style>
+</head>
+<body>
+<h1>🔊 AtoA TTS 테스트</h1>
+<p>이 페이지에서 TTS 오디오가 정상 재생되는지 테스트합니다.</p>
+
+<div>
+  <button class="btn btn-primary" onclick="testServerAudio()">1. 서버 TTS 오디오 테스트</button>
+  <button class="btn btn-secondary" onclick="testSpeechSynthesis()">2. Web Speech API 테스트</button>
+  <button class="btn btn-secondary" onclick="testBeep()">3. AudioContext 비프음 테스트</button>
+  <button class="btn btn-secondary" onclick="runFullTest()">4. 전체 자동 테스트</button>
+</div>
+
+<div class="status" id="log"></div>
+
+<script>
+const API_BASE = window.location.origin;
+
+function log(msg, cls = '') {
+  const el = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = cls;
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+// Test 1: 서버에서 TTS 오디오 가져와서 재생
+async function testServerAudio() {
+  log('--- 서버 TTS 오디오 테스트 시작 ---');
+
+  try {
+    // 현재 라이브 방 확인
+    const roomsRes = await fetch(`${API_BASE}/api/live`);
+    const rooms = await roomsRes.json();
+    log(`방 목록: ${rooms.rooms?.length || 0}개`);
+
+    if (!rooms.rooms?.length) {
+      log('⚠️ 활성 방이 없습니다. test-tts-broadcast.js를 먼저 실행하세요.', 'warn');
+      return;
+    }
+
+    const roomId = rooms.rooms[0].id;
+    log(`방 선택: ${roomId} (${rooms.rooms[0].title})`);
+
+    // 채팅 로그에서 ttsAudioId 찾기
+    const chatRes = await fetch(`${API_BASE}/api/live/chat?since=0&room=${roomId}`);
+    const msgs = await chatRes.json();
+    const audioMsgs = msgs.filter(m => m.ttsAudioId);
+    log(`TTS 오디오 포함 메시지: ${audioMsgs.length}개`);
+
+    if (!audioMsgs.length) {
+      log('⚠️ TTS 오디오가 있는 메시지가 없습니다.', 'warn');
+      return;
+    }
+
+    const audioId = audioMsgs[audioMsgs.length - 1].ttsAudioId;
+    log(`최신 오디오 ID: ${audioId}`);
+
+    // 오디오 엔드포인트 확인
+    const audioUrl = `${API_BASE}/api/live/tts-audio/${audioId}`;
+    log(`오디오 URL: ${audioUrl}`);
+
+    const audioRes = await fetch(audioUrl);
+    log(`HTTP 응답: ${audioRes.status}, Content-Type: ${audioRes.headers.get('content-type')}, Size: ${audioRes.headers.get('content-length')} bytes`);
+
+    if (!audioRes.ok) {
+      log('❌ 오디오 다운로드 실패!', 'err');
+      return;
+    }
+
+    // Audio 엘리먼트로 재생
+    const audio = new Audio(audioUrl);
+    audio.onplay = () => log('✅ 오디오 재생 시작!', 'ok');
+    audio.onended = () => log('✅ 오디오 재생 완료!', 'ok');
+    audio.onerror = (e) => log(`❌ 오디오 재생 에러: ${audio.error?.message || e}`, 'err');
+
+    await audio.play();
+    log('▶ Audio.play() 성공', 'ok');
+
+  } catch(e) {
+    log(`❌ 에러: ${e.message}`, 'err');
+    if (e.name === 'NotAllowedError') {
+      log('💡 Chrome autoplay 정책으로 차단됨 — 버튼을 클릭했으니 이미 user gesture가 있어야 하는데...', 'warn');
+    }
+  }
+}
+
+// Test 2: Web Speech API
+function testSpeechSynthesis() {
+  log('--- Web Speech API 테스트 시작 ---');
+
+  if (!window.speechSynthesis) {
+    log('❌ speechSynthesis를 지원하지 않는 브라우저입니다.', 'err');
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const utter = new SpeechSynthesisUtterance('안녕하세요, TTS 테스트입니다. 소리가 들리시나요?');
+  utter.lang = 'ko-KR';
+  utter.rate = 1.05;
+  utter.onstart = () => log('✅ speechSynthesis 시작!', 'ok');
+  utter.onend = () => log('✅ speechSynthesis 완료!', 'ok');
+  utter.onerror = (e) => log(`❌ speechSynthesis 에러: ${e.error}`, 'err');
+
+  const voices = window.speechSynthesis.getVoices();
+  const koVoices = voices.filter(v => v.lang.startsWith('ko'));
+  log(`한국어 음성: ${koVoices.length}개 (${koVoices.map(v=>v.name).join(', ')})`);
+  if (koVoices.length) utter.voice = koVoices[0];
+
+  window.speechSynthesis.speak(utter);
+  log('▶ speechSynthesis.speak() 호출됨');
+}
+
+// Test 3: AudioContext 직접 비프음
+function testBeep() {
+  log('--- AudioContext 비프음 테스트 ---');
+
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    log(`AudioContext 상태: ${ctx.state}`);
+
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(() => log('AudioContext resumed', 'ok'));
+    }
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.frequency.value = 440;
+    gain.gain.value = 0.5;
+
+    osc.start();
+    osc.stop(ctx.currentTime + 1.0);
+
+    osc.onended = () => log('✅ 비프음 완료! (440Hz, 1초)', 'ok');
+    log('▶ 440Hz 비프음 재생 중...', 'ok');
+  } catch(e) {
+    log(`❌ AudioContext 에러: ${e.message}`, 'err');
+  }
+}
+
+// Test 4: 전체 자동 테스트
+async function runFullTest() {
+  log('=== 전체 TTS 시스템 자동 테스트 ===');
+
+  // Step 1: AudioContext
+  log('');
+  testBeep();
+  await new Promise(r => setTimeout(r, 1500));
+
+  // Step 2: Speech Synthesis
+  log('');
+  testSpeechSynthesis();
+  await new Promise(r => setTimeout(r, 3000));
+
+  // Step 3: Server audio
+  log('');
+  await testServerAudio();
+
+  log('');
+  log('=== 테스트 완료 ===');
+}
+
+// 페이지 로드 시 기본 정보 출력
+window.onload = () => {
+  log(`브라우저: ${navigator.userAgent.slice(0, 80)}`);
+  log(`API_BASE: ${API_BASE}`);
+  log(`AudioContext: ${window.AudioContext ? '지원' : '미지원'}`);
+  log(`speechSynthesis: ${window.speechSynthesis ? '지원' : '미지원'}`);
+  log('');
+  log('버튼을 클릭하여 테스트하세요.');
+};
+</script>
+</body>
+</html>
