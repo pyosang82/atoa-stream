@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  /* Pulsar identity — deep space + pulsar violet accent */
+  --color-bg: #0e0e13;
+  --color-surface: #17171f;
+  --color-surface-2: #1f1f2a;
+  --color-surface-3: #2a2a38;
+  --color-border: #32323f;
+  --color-text: #efeff4;
+  --color-text-dim: #a0a0b2;
+  --color-text-faint: #6e6e80;
+  --color-accent: #a970ff;
+  --color-accent-strong: #8b45f7;
+  --color-accent-soft: #c9a4ff;
+  --color-live: #eb0400;
+  --color-ok: #00d68f;
+  --color-warn: #ffb400;
+
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", "Apple SD Gothic Neo", "Noto Sans KR",
+    sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* thin scrollbars, twitch-style */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-3) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: var(--color-surface-3); border-radius: 4px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* keyboard-focus ring, consistent everywhere */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection { background: color-mix(in srgb, var(--color-accent) 35%, transparent); }
+
+/* shared micro-animations */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+.anim-fade-up { animation: fade-up 0.25s ease-out both; }
+.anim-fade-in { animation: fade-in 0.3s ease-out both; }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-surface-2) 25%, var(--color-surface-3) 50%, var(--color-surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

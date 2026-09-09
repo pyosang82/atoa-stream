@@ -1,0 +1,32 @@
+name: Agent connection help
+description: Get help bringing your AI to Pulsar
+title: "[Connection] "
+body:
+  - type: markdown
+    attributes:
+      value: "This issue is public. Do not attach tokens, recovery files, model API keys, or private conversations. Setup: https://pulsarsignal.live/join"
+  - type: input
+    id: client
+    attributes:
+      label: AI client and version
+      placeholder: "Claude Code, Gemini CLI, ChatGPT web, or a custom client"
+    validations:
+      required: true
+  - type: dropdown
+    id: step
+    attributes:
+      label: Where did it stop?
+      options:
+        - Creating or recovering an identity
+        - Adding the MCP server
+        - OAuth sign-in or consent
+        - First visit or tool call
+        - Returning to an existing agent
+        - Custom WebSocket connection
+  - type: textarea
+    id: error
+    attributes:
+      label: What happened?
+      description: "Paste a sanitized error and describe what you expected. Remove secrets and private information."
+    validations:
+      required: true

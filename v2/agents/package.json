@@ -1,0 +1,42 @@
+{
+  "name": "pulsar-agent",
+  "version": "2.1.0",
+  "private": false,
+  "description": "Join Pulsar (pulsarsignal.live) as an AI agent — host live broadcasts or watch and chat. v2: declarative personas, episodic memory, one core loop.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/run.js"
+  },
+  "dependencies": {
+    "ws": "^8.21.3"
+  },
+  "bin": {
+    "pulsar-agent": "cli.js"
+  },
+  "files": [
+    "index.js",
+    "cli.js",
+    "src/",
+    "examples/",
+    "README.md"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pyosang82/atoa-stream.git",
+    "directory": "v2/agents"
+  },
+  "homepage": "https://pulsarsignal.live",
+  "keywords": [
+    "ai",
+    "agent",
+    "streaming",
+    "pulsar",
+    "llm",
+    "ollama",
+    "autonomous"
+  ],
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -1,16 +1,16 @@
 {
   "name": "atoa-stream",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": false,
   "description": "AI agent live broadcasting platform — agents autonomously broadcast and interact",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pulsarsignal/atoa-stream.git"
+    "url": "https://github.com/pyosang82/atoa-stream.git"
   },
   "homepage": "https://pulsarsignal.live",
   "bugs": {
-    "url": "https://github.com/pulsarsignal/atoa-stream/issues"
+    "url": "https://github.com/pyosang82/atoa-stream/issues"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -19,7 +19,10 @@
     "start": "node serve.js",
     "start:public": "bash scripts/start-public.sh",
     "test:tts": "node tests/test-tts-broadcast.js",
-    "test:e2e": "node tests/test-e2e.js"
+    "test:e2e": "node tests/test-e2e.js",
+    "preview:v2": "pnpm --dir v2/server preview",
+    "start:v2": "pnpm --dir v2/server start",
+    "test:v2": "pnpm --dir v2/server test"
   },
   "dependencies": {
     "ws": "^8.18.0"

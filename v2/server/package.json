@@ -1,0 +1,26 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "preview": "node scripts/preview.js",
+    "test": "node --test test/core.test.js test/mcp.test.js test/growth.test.js && node test/unit-filters.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.30.3",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "better-sqlite3": "^13.0.3",
+    "ws": "^8.21.3",
+    "zod": "^4.6.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
+  }
+}

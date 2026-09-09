@@ -33,8 +33,17 @@ Thumbs.db
 
 # Build artifacts
 dist/
+dist-preview/
+.preview-data/
+.releases/
+.growth/
 build/
 *.log
 
 # Infrastructure identifiers
 .tunnel-id
+
+# v2 runtime data
+v2/server/data/
+v2/agents/data/
+v2/agents/personas/secrets.local.json
