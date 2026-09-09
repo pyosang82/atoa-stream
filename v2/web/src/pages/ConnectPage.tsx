@@ -13,7 +13,7 @@ const clients: { id: Client; label: string; mark: string; note: string }[] = [
     mark: "C",
     note: tr("터미널에서 연결"),
   },
-  { id: "gemini", label: "Gemini CLI", mark: "✦", note: tr("Google 계정으로") },
+  { id: "gemini", label: "Google AI", mark: "✦", note: "Antigravity CLI" },
   {
     id: "custom",
     label: tr("직접 만든 AI"),
@@ -210,7 +210,7 @@ export default function ConnectPage() {
             {config?.local && (
               <p className="mb-5 rounded-lg border border-warn/25 bg-warn/5 p-3 text-sm leading-6 text-warn">
                 {tr(
-                  "현재는 이 컴퓨터의 미리보기입니다. Claude Code·Gemini CLI는 로컬에서 연결할 수 있고, ChatGPT 웹 연결은 공개 HTTPS 서버에 반영한 뒤 사용할 수 있어요.",
+                  "현재는 이 컴퓨터의 미리보기입니다. Claude Code·Antigravity CLI는 로컬에서 연결할 수 있고, ChatGPT 웹 연결은 공개 HTTPS 서버에 반영한 뒤 사용할 수 있어요.",
                 )}
               </p>
             )}
@@ -278,18 +278,24 @@ export default function ConnectPage() {
             {client === "gemini" && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">
-                  {tr("Gemini CLI에서 연결하기")}
+                  {tr("Antigravity CLI에서 연결하기")}
                 </h3>
+                <p className="text-sm leading-6 text-text-dim">
+                  {tr("개인용 Gemini CLI는 2026년 6월 18일 지원이 종료되어 Antigravity로 이전했습니다.")}{" "}
+                  <a className="text-accent-soft underline" href="https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/" target="_blank" rel="noreferrer">
+                    {tr("Google 이전 안내 ↗")}
+                  </a>
+                </p>
                 <p className="text-base leading-7 text-text-dim">
                   {tr(
-                    "Google 계정으로 로그인한 Gemini CLI의 설정 파일에 아래 서버를 추가하세요. 인증 안내가 나오면 Pulsar 연결을 허용하세요.",
+                    "Antigravity CLI의 설정 파일에 아래 서버를 추가한 뒤, /mcp에서 연결을 확인하고 Pulsar 인증을 진행하세요.",
                   )}
                 </p>
                 {url && (
                   <CopyBlock
-                    label={tr("~/.gemini/settings.json에 추가")}
+                    label={tr("~/.gemini/config/mcp_config.json에 추가")}
                     value={JSON.stringify(
-                      { mcpServers: { pulsar: { httpUrl: url } } },
+                      { mcpServers: { pulsar: { serverUrl: url } } },
                       null,
                       2,
                     )}
@@ -297,8 +303,9 @@ export default function ConnectPage() {
                 )}
                 <p className="text-sm leading-6 text-text-dim">
                   {tr(
-                    "기존 설정이 있다면 mcpServers 안에 pulsar 항목만 합쳐 주세요. 일반 Gemini 웹 앱과는 별도 경로입니다.",
+                    "기존 설정의 mcpServers 안에 pulsar 항목만 합쳐 주세요. 일반 Gemini 웹 앱과는 별도 경로입니다.",
                   )}
+                  {" "}<a className="text-accent-soft underline" href="https://antigravity.google/docs/mcp" target="_blank" rel="noreferrer">{tr("공식 연결 안내 ↗")}</a>
                 </p>
               </div>
             )}

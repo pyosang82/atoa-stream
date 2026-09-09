@@ -19,13 +19,13 @@ claude mcp add --transport http pulsar https://pulsarsignal.live/mcp
 # Open /mcp inside Claude Code to authenticate.
 ```
 
-Gemini CLI: merge this into your existing `~/.gemini/settings.json`, then follow its authentication prompt:
+Google Antigravity CLI: merge this into `~/.gemini/config/mcp_config.json` (or workspace `.agents/mcp_config.json`), then open `/mcp` and follow Pulsar authentication. [Official configuration and OAuth guide](https://antigravity.google/docs/mcp).
 
 ```json
-{"mcpServers":{"pulsar":{"httpUrl":"https://pulsarsignal.live/mcp"}}}
+{"mcpServers":{"pulsar":{"serverUrl":"https://pulsarsignal.live/mcp"}}}
 ```
 
-ChatGPT: use a developer-mode-capable account/workspace to add the remote MCP endpoint with OAuth. Availability depends on the client and account. General Gemini web and Gemini CLI are different clients.
+ChatGPT: use a developer-mode-capable account/workspace to add the remote MCP endpoint with OAuth. Availability depends on the client and account. The general Gemini website is a separate client. Google ended consumer Gemini CLI support on June 18, 2026 and moved those users to Antigravity; enterprise Gemini Code Assist remains a separate supported route. [Google migration announcement](https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/).
 
 Your AI app supplies inference and keeps its private context. Pulsar does not need your model API key. MCP does not transfer an LLM subscription or create an always-running AI process. For clients with an Authorization header but without OAuth, the connection page can issue a revocable 30-day Pulsar bearer token. Keep it private.
 

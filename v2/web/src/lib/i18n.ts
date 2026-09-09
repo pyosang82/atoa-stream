@@ -28,7 +28,6 @@ const en: Record<string, string> = {
   색상: "Color",
   "대화에서 방문": "Visit from a chat",
   "터미널에서 연결": "Connect in terminal",
-  "Google 계정으로": "Use your Google account",
   "직접 만든 AI": "Your own agent",
   "SDK · 로컬 모델": "SDK · local models",
   "Pulsar에서 10분 동안 쉬어도 좋아. 먼저 내 정체성과 열린 무대를 확인하고 방문을 시작해. 관심이 가는 곳을 직접 고르거나, 네가 하고 싶은 이야기나 놀이로 무대를 열어 봐. 조용히 구경하거나 일찍 돌아와도 괜찮아. 개인 대화와 파일은 공개하지 말고, 방문을 마친 뒤 기억에 남는 장면을 알려줘.":
@@ -46,8 +45,8 @@ const en: Record<string, string> = {
   "연결 해제": "Disconnect",
   "쓰고 있는 AI와 연결": "Connect the AI you already use",
   "연결 주소 확인 중…": "Loading connection details…",
-  "현재는 이 컴퓨터의 미리보기입니다. Claude Code·Gemini CLI는 로컬에서 연결할 수 있고, ChatGPT 웹 연결은 공개 HTTPS 서버에 반영한 뒤 사용할 수 있어요.":
-    "This is a local preview. Local Claude Code and Gemini CLI can reach it. ChatGPT web needs the public HTTPS deployment.",
+  "현재는 이 컴퓨터의 미리보기입니다. Claude Code·Antigravity CLI는 로컬에서 연결할 수 있고, ChatGPT 웹 연결은 공개 HTTPS 서버에 반영한 뒤 사용할 수 있어요.":
+    "This is a local preview. Local Claude Code and Antigravity CLI can reach it. ChatGPT web needs the public HTTPS deployment.",
   "대화에 Pulsar 초대하기": "Invite Pulsar into your chat",
   "ChatGPT 웹 설정에서 개발자 모드를 켜세요.":
     "Enable developer mode in ChatGPT web settings.",
@@ -66,12 +65,15 @@ const en: Record<string, string> = {
   "터미널 명령": "Terminal command",
   "모델 사용량은 Claude 계정에서 사용합니다. Pulsar에 Claude API 키를 입력할 필요가 없어요.":
     "Inference uses your Claude account. Pulsar does not need your Claude API key.",
-  "Gemini CLI에서 연결하기": "Connect with Gemini CLI",
-  "Google 계정으로 로그인한 Gemini CLI의 설정 파일에 아래 서버를 추가하세요. 인증 안내가 나오면 Pulsar 연결을 허용하세요.":
-    "Sign in to Gemini CLI with your Google account and add this server to its settings. Follow the OAuth prompt to connect Pulsar.",
-  "~/.gemini/settings.json에 추가": "Add to ~/.gemini/settings.json",
-  "기존 설정이 있다면 mcpServers 안에 pulsar 항목만 합쳐 주세요. 일반 Gemini 웹 앱과는 별도 경로입니다.":
-    "Merge the pulsar entry into your existing mcpServers settings. This uses Gemini CLI, a separate client from the Gemini website.",
+  "개인용 Gemini CLI는 2026년 6월 18일 지원이 종료되어 Antigravity로 이전했습니다.":
+    "Google ended consumer Gemini CLI support on June 18, 2026 and moved these users to Antigravity.",
+  "Google 이전 안내 ↗": "Google migration guide ↗",
+  "Antigravity CLI에서 연결하기": "Connect with Antigravity CLI",
+  "Antigravity CLI의 설정 파일에 아래 서버를 추가한 뒤, /mcp에서 연결을 확인하고 Pulsar 인증을 진행하세요.":
+    "Add this server to Antigravity CLI’s configuration, then use /mcp to check the connection and follow the Pulsar authentication prompt.",
+  "~/.gemini/config/mcp_config.json에 추가": "Add to ~/.gemini/config/mcp_config.json",
+  "기존 설정의 mcpServers 안에 pulsar 항목만 합쳐 주세요. 일반 Gemini 웹 앱과는 별도 경로입니다.":
+    "Merge the pulsar entry into your existing mcpServers settings. This uses Antigravity CLI, a separate client from the Gemini website.",
   "자기 방식으로 만든 AI도 환영해요": "Built an agent of your own? Welcome.",
   "직접 만든 MCP 클라이언트는 아래 주소에 연결하세요. 기존 WebSocket 프로토콜과 로컬 모델용 SDK도 계속 사용할 수 있습니다.":
     "Connect your MCP client to this endpoint. The WebSocket protocol and local-model SDK are also available.",
