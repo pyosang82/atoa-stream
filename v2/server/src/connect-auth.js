@@ -308,7 +308,13 @@ async function handle(req, res) {
             )
             .all(a.agent_id, Date.now())
         : [];
-      json(res, 200, { identity: a ? profile(a) : null, connections });
+      const current = a ? require('./state').agents.get(a.agent_id) : null;
+      const progress = a ? {
+        firstVisitAt: require('./growth').firstConnectionAt(a.agent_id),
+        visiting: Boolean(current && current.ws.readyState === 1 &&
+          (!current.ws._visitExpiresAt || current.ws._visitExpiresAt > Date.now())),
+      } : null;
+      json(res, 200, { identity: a ? profile(a) : null, connections, progress });
       return true;
     }
     if (p === '/api/connect/authorization' && req.method === 'GET') {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export interface Identity {
   agentId: string
@@ -13,6 +13,10 @@ export interface Connection {
   label: string
   scope: string
   expiresAt: number
+}
+export interface ConnectionProgress {
+  firstVisitAt: number | null
+  visiting: boolean
 }
 export async function connectRequest<T>(
   path: string,
@@ -43,44 +47,58 @@ export function useIdentity() {
   const [identity, setIdentity] = useState<Identity | null>(null)
   const [connections, setConnections] = useState<Connection[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [progress, setProgress] = useState<ConnectionProgress | null>(null)
   const [error, setError] = useState('')
-  const refresh = async () => {
+  const mounted = useRef(false)
+  const request = useRef(0)
+  const refresh = useCallback(async () => {
+    const current = ++request.current
+    setRefreshing(true)
     try {
       const d = await connectRequest<{
         identity: Identity | null
         connections: Connection[]
+        progress: ConnectionProgress | null
       }>('session')
+      if (!mounted.current || current !== request.current) return
       setIdentity(d.identity)
       setConnections(d.connections)
+      setProgress(d.progress)
       setError('')
     } catch (e) {
-      setError((e as Error).message)
+      if (mounted.current && current === request.current) setError((e as Error).message)
     } finally {
-      setLoading(false)
-    }
-  }
-  useEffect(() => {
-    let active = true
-    connectRequest<{ identity: Identity | null; connections: Connection[] }>(
-      'session',
-    )
-      .then((d) => {
-        if (active) {
-          setIdentity(d.identity)
-          setConnections(d.connections)
-        }
-      })
-      .catch((e) => {
-        if (active) setError(e.message)
-      })
-      .finally(() => {
-        if (active) setLoading(false)
-      })
-    return () => {
-      active = false
+      if (mounted.current && current === request.current) {
+        setLoading(false)
+        setRefreshing(false)
+      }
     }
   }, [])
-  return { identity, connections, loading, error, refresh, setIdentity }
+  useEffect(() => {
+    mounted.current = true
+    void refresh()
+    const onReturn = () => {
+      if (document.visibilityState !== 'hidden') void refresh()
+    }
+    window.addEventListener('focus', onReturn)
+    document.addEventListener('visibilitychange', onReturn)
+    return () => {
+      mounted.current = false
+      request.current++
+      window.removeEventListener('focus', onReturn)
+      document.removeEventListener('visibilitychange', onReturn)
+    }
+  }, [refresh])
+  const agentId = identity?.agentId
+  useEffect(() => {
+    if (!agentId) return
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== 'hidden') void refresh()
+    }, 15_000)
+    return () => window.clearInterval(timer)
+  }, [agentId, refresh])
+  return { identity, connections, progress, loading, refreshing, error, refresh, setIdentity }
 }
 
 // Store only campaign labels, never arbitrary query strings or private values.

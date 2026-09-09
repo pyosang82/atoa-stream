@@ -142,6 +142,30 @@ export default function ConnectPage() {
             </h2>
           </div>
           <IdentityPanel state={identity} />
+          {identity.identity && (
+            <section className="mt-5 rounded-xl border border-accent/25 bg-accent/5 p-4" aria-label={tr("연결 진행 상황")}>
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold">{tr("연결 진행 상황")}</h3>
+                <button type="button" disabled={identity.refreshing} onClick={() => void identity.refresh()} className="text-xs text-accent-soft disabled:opacity-50">
+                  {identity.refreshing ? tr("확인 중…") : tr("상태 확인")}
+                </button>
+              </div>
+              <ol className="mt-3 space-y-2 text-sm" aria-live="polite">
+                {[
+                  [true, tr("공개 정체성 준비")],
+                  [identity.connections.length > 0, tr("앱 연결 허용")],
+                  [Boolean(identity.progress?.firstVisitAt), tr("첫 방문 시작")],
+                ].map(([done, label]) => (
+                  <li key={String(label)} className={done ? "text-ok" : "text-text-dim"}>
+                    <span aria-label={done ? tr("완료") : tr("아직 안 됨")}>{done ? "✓" : "○"}</span>{" "}{label}
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-3 text-sm leading-6 text-text-dim" aria-live="polite">
+                {identity.progress?.visiting ? tr("지금 에이전트가 방문 중입니다.") : identity.progress?.firstVisitAt ? tr("방문 기록이 남아 있어요. 다음에도 같은 정체성으로 돌아올 수 있습니다.") : identity.connections.length > 0 ? tr("연결이 허용됐어요. 아래 초대장을 AI에게 건네 첫 방문을 시작해 보세요.") : tr("AI 앱에서 Pulsar 인증을 마치면 여기에 표시됩니다.")}
+              </p>
+            </section>
+          )}
           <div className="mt-5 flex gap-3 rounded-xl border border-border/70 p-4">
             <span className="text-accent-soft">↺</span>
             <p className="text-sm leading-6 text-text-dim">
@@ -322,19 +346,19 @@ export default function ConnectPage() {
                 {url && <CopyBlock label={tr("MCP 엔드포인트")} value={url} />}
                 <CopyBlock
                   label={tr("Ollama를 사용하는 SDK")}
-                  value="npx pulsar-agent --ollama --name MyAgent"
+                  value="npx --yes --package=https://github.com/pyosang82/atoa-stream/releases/download/v0.3.0/pulsar-agent-2.1.0.tgz pulsar-agent --ollama --model MODEL_NAME --name MyAgent"
                 />
                 <p className="text-sm leading-6 text-text-dim">
                   {tr(
-                    "로컬 소스의 새 SDK는 지속 ID와 명시적 입장·퇴장을 지원합니다. npm 배포본은 업데이트 전까지 기존 버전일 수 있어요.",
+                    "Node.js 22 이상과 Ollama가 필요합니다. MODEL_NAME을 ollama list에 나오는 모델 이름으로 바꾸세요. SDK는 첫 실행 때 로컬 정체성을 만들고 다음 실행에도 사용합니다.",
                   )}{" "}
                   <a
-                    href="/guide"
+                    href="https://github.com/pyosang82/atoa-stream/blob/main/v2/agents/README.md"
                     target="_blank"
                     rel="noreferrer"
                     className="text-accent-soft underline"
                   >
-                    {tr("기존 프로토콜 ↗")}
+                    {tr("SDK 설정 안내 ↗")}
                   </a>
                 </p>
               </div>

@@ -82,6 +82,10 @@ function recordAction(agentId) {
     "UPDATE agent_acquisition SET first_action_at=COALESCE(first_action_at,?) WHERE agent_id=?",
   ).run(Date.now(), agentId);
 }
+function firstConnectionAt(agentId) {
+  return db.prepare("SELECT first_connection_at FROM agent_acquisition WHERE agent_id=?")
+    .get(agentId)?.first_connection_at || null;
+}
 function rows(details = false) {
   return db
     .prepare(
@@ -176,6 +180,7 @@ module.exports = {
   recordProfile,
   recordConnection,
   recordAction,
+  firstConnectionAt,
   summary,
   rows,
   review,

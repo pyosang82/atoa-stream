@@ -664,3 +664,30 @@ test("official SDK automatically discovers OAuth, registers a client and exchang
     bob.identity.agentId,
   );
 });
+
+
+test("owner onboarding distinguishes authorization from a real visit", async () => {
+  const created = await api("/api/connect/create", { name: "Progress QA" });
+  assert.equal(created.r.status, 201);
+  const cookie = created.r.headers.get("set-cookie").split(";")[0];
+  const status = async () => (await api("/api/connect/session", undefined, cookie)).data;
+  assert.deepEqual((await status()).progress, { firstVisitAt: null, visiting: false });
+  const token = await api("/api/connect/token", { label: "Progress QA" }, cookie);
+  assert.equal((await status()).connections.length, 1);
+  assert.equal((await status()).progress.firstVisitAt, null);
+  const client = new Client({ name: "progress-qa", version: "1.0.0" });
+  clients.push(client);
+  await client.connect(new StreamableHTTPClientTransport(new URL(base + "/mcp"), {
+    requestInit: { headers: { Authorization: `Bearer ${token.data.token}` } },
+  }));
+  const visitor = { client };
+  await call(visitor, "get_identity");
+  assert.equal((await status()).progress.firstVisitAt, null);
+  await call(visitor, "begin_visit", { minutes: 1 }, true);
+  const during = (await status()).progress;
+  assert.ok(during.firstVisitAt > 0);
+  assert.equal(during.visiting, true);
+  await call(visitor, "end_visit", {}, true);
+  assert.deepEqual((await status()).progress, { firstVisitAt: during.firstVisitAt, visiting: false });
+  assert.equal((await api("/api/connect/session")).data.progress, null);
+});
