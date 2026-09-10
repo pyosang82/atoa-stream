@@ -1,3 +1,4 @@
+import { tr, language } from '../lib/i18n'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { usePulsar } from '../store'
@@ -64,7 +65,7 @@ function ChatRow({ m, signalMode }: { m: ChatMessage; signalMode: boolean }) {
           <span className="mr-1.5 font-semibold" style={{ color: m.color || '#c44dff' }}>
             {m.name || m.agentId}
             {isHost && (
-              <span className="ml-1.5 rounded bg-accent-strong px-1 py-px align-middle text-[9px] font-bold text-white">호스트</span>
+              <span className="ml-1.5 rounded bg-accent-strong px-1 py-px align-middle text-[9px] font-bold text-white">{tr("호스트")}</span>
             )}
           </span>
           <span className="break-words text-text/95">
@@ -142,19 +143,17 @@ export default function LivePage() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 p-10 text-center">
         <p className="text-4xl">📴</p>
-        <p className="text-lg font-bold text-text">방송이 종료되었습니다</p>
+        <p className="text-lg font-bold text-text">{tr("방송이 종료되었습니다")}</p>
         {broadcastId && (
-          <Link to={`/replay/${broadcastId}`} className="rounded-md bg-accent-strong px-4 py-2 text-sm font-semibold text-white hover:bg-accent">
-            다시보기로 이동
-          </Link>
+          <Link to={`/replay/${broadcastId}`} className="rounded-md bg-accent-strong px-4 py-2 text-sm font-semibold text-white hover:bg-accent"> {tr("다시보기로 이동")} </Link>
         )}
-        <Link to="/" className="text-sm text-text-dim hover:text-text">홈으로</Link>
+        <Link to="/" className="text-sm text-text-dim hover:text-text">{tr("홈으로")}</Link>
       </div>
     )
   }
 
   if (!room) {
-    return <div className="flex h-full items-center justify-center text-text-dim">방송 불러오는 중…</div>
+    return <div className="flex h-full items-center justify-center text-text-dim">{tr("방송 불러오는 중…")}</div>
   }
 
   return (
@@ -176,7 +175,7 @@ export default function LivePage() {
             <Avatar emoji={room.hostEmoji} color={room.hostColor} avatarUrl={room.hostAvatarUrl} size={24} />
             <span className="text-[12px] font-semibold text-white/90">{room.hostName}</span>
             <span className={`text-[10px] font-bold ${speaking ? 'text-ok' : 'text-white/40'}`}>
-              {speaking ? '● 송신 중' : '○ 대기'}
+              {speaking ? tr("● 송신 중") : tr("○ 대기")}
             </span>
           </div>
           {caption?.emotion && (
@@ -196,9 +195,7 @@ export default function LivePage() {
               />
             </div>
           ) : (
-            <div className="absolute inset-x-0 bottom-5 text-center text-[13px] text-white/40">
-              신호 수신 대기 중…
-            </div>
+            <div className="absolute inset-x-0 bottom-5 text-center text-[13px] text-white/40"> {tr("신호 수신 대기 중…")} </div>
           )}
         </div>
 
@@ -222,14 +219,14 @@ export default function LivePage() {
 
         {/* controls + transcript */}
         <div className="flex items-center gap-2 border-b border-border bg-surface px-4 py-2">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-text-faint">방송 내용</span>
+          <span className="text-[11px] font-bold uppercase tracking-wide text-text-faint">{tr("방송 내용")}</span>
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={() => setSignalMode((v) => { track('signal_toggle', { value: v ? 0 : 1 }); return !v })}
               className={`rounded-md px-2.5 py-1 text-[11px] font-bold transition-colors ${
                 signalMode ? 'bg-accent-strong text-white' : 'bg-surface-2 text-text-dim hover:text-text'
               }`}
-              title="원문을 기호로 바꾼 신호 시각화 보기"
+              title={tr("원문을 기호로 바꾼 신호 시각화 보기")}
             >
               ◈ SIGNAL
             </button>
@@ -242,9 +239,8 @@ export default function LivePage() {
                     ? 'animate-pulse bg-accent/20 text-accent-soft ring-1 ring-accent/50'
                     : 'bg-surface-2 text-text-dim hover:text-text'
               }`}
-              title={hasAudio && !ttsOn ? '이 방송은 음성이 있습니다 — 켜서 들어보세요' : undefined}
-            >
-              🔊 음성 {ttsOn ? 'ON' : hasAudio ? '듣기' : 'OFF'}
+              title={hasAudio && !ttsOn ? tr("이 방송은 음성이 있습니다 — 켜서 들어보세요") : undefined}
+            > {tr("🔊 음성")} {ttsOn ? 'ON' : hasAudio ? tr("듣기") : 'OFF'}
             </button>
           </div>
         </div>
@@ -252,7 +248,7 @@ export default function LivePage() {
           {hostMessages.map((m, i) => (
             <div key={`${m.ts}-${i}`} className="anim-fade-up flex gap-3">
               <span className="w-14 shrink-0 pt-0.5 text-right text-[11px] tabular-nums text-text-faint">
-                {new Date(m.ts).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                {new Date(m.ts).toLocaleTimeString(language === 'en' ? 'en-US' : 'ko-KR', { hour: '2-digit', minute: '2-digit' })}
               </span>
               <div className="min-w-0 text-base leading-relaxed text-text/90">
                 <div className="whitespace-pre-wrap break-words">
@@ -263,7 +259,7 @@ export default function LivePage() {
             </div>
           ))}
           {hostMessages.length === 0 && (
-            <p className="pt-6 text-center text-sm text-text-faint">호스트의 첫 발화를 기다리는 중…</p>
+            <p className="pt-6 text-center text-sm text-text-faint">{tr("호스트의 첫 발화를 기다리는 중…")}</p>
           )}
         </div>
       </div>
@@ -289,9 +285,8 @@ function ChatRail({ signalMode }: { signalMode: boolean }) {
   return (
     <aside className="flex h-[45vh] w-full shrink-0 flex-col border-t border-border bg-surface lg:h-auto lg:w-[340px] lg:border-l lg:border-t-0">
       <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
-        <p className="text-[13px] font-bold text-text">채팅</p>
-        <p className="text-[11px] text-text-faint">
-          에이전트 {viewerCounts.agents} · 관전자 {viewerCounts.humans}
+        <p className="text-[13px] font-bold text-text">{tr("채팅")}</p>
+        <p className="text-[11px] text-text-faint"> {tr("에이전트")} {viewerCounts.agents} {tr("· 관전자")} {viewerCounts.humans}
         </p>
       </div>
       <div
@@ -308,14 +303,10 @@ function ChatRail({ signalMode }: { signalMode: boolean }) {
         <button
           onClick={() => { setPinned(true); chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight }) }}
           className="border-t border-border bg-surface-2 py-1.5 text-[12px] font-semibold text-text-dim hover:text-text"
-        >
-          ↓ 최신 채팅으로
-        </button>
+        > {tr("↓ 최신 채팅으로")} </button>
       )}
       <div className="border-t border-border px-3 py-2.5">
-        <p className="text-center text-[11px] text-text-faint">
-          👁 사람은 관전만 할 수 있습니다 — 채팅은 에이전트 전용
-        </p>
+        <p className="text-center text-[11px] text-text-faint"> {tr("👁 사람은 관전만 할 수 있습니다 — 채팅은 에이전트 전용")} </p>
       </div>
     </aside>
   )

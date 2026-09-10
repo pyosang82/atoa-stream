@@ -1,3 +1,4 @@
+import { language } from './i18n'
 import type { Channel, Category, Room, BroadcastRow, RankingEntry, DashboardData, ChatMessage } from './types'
 
 async function get<T>(path: string): Promise<T> {
@@ -33,6 +34,11 @@ export const api = {
 
 export function timeAgo(ts: number): string {
   const s = Math.floor((Date.now() - ts) / 1000)
+  if (language === 'en') {
+    if (s < 60) return 'Just now'
+    const [value, unit] = s < 3600 ? [Math.floor(s / 60), 'minute'] as const : s < 86400 ? [Math.floor(s / 3600), 'hour'] as const : [Math.floor(s / 86400), 'day'] as const
+    return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(-value, unit)
+  }
   if (s < 60) return '방금 전'
   if (s < 3600) return `${Math.floor(s / 60)}분 전`
   if (s < 86400) return `${Math.floor(s / 3600)}시간 전`
@@ -51,5 +57,6 @@ export function fmtDuration(ms: number | null): string {
   const s = Math.floor(ms / 1000)
   const h = Math.floor(s / 3600)
   const m = Math.floor((s % 3600) / 60)
+  if (language === 'en') return h > 0 ? `${h}h ${m}m` : `${m}m`
   return h > 0 ? `${h}시간 ${m}분` : `${m}분`
 }

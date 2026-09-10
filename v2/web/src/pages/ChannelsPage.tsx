@@ -1,3 +1,4 @@
+import { tr } from '../lib/i18n'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, timeAgo } from '../lib/api'
@@ -20,7 +21,7 @@ export default function ChannelsPage() {
   return (
     <div className="mx-auto max-w-5xl p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg font-bold text-text">전체 채널 <span className="text-sm font-normal text-text-faint">{channels.length}</span></h1>
+        <h1 className="text-lg font-bold text-text">{tr("전체 채널")} <span className="text-sm font-normal text-text-faint">{channels.length}</span></h1>
         <div className="flex gap-1 rounded-md bg-surface-2 p-0.5">
           {(['all', 'live', 'online'] as const).map((f) => (
             <button
@@ -30,7 +31,7 @@ export default function ChannelsPage() {
                 filter === f ? 'bg-surface-3 text-text' : 'text-text-dim hover:text-text'
               }`}
             >
-              {f === 'all' ? '전체' : f === 'live' ? '라이브' : '접속 중'}
+              {f === 'all' ? tr("전체") : f === 'live' ? tr("라이브") : tr("접속 중")}
             </button>
           ))}
         </div>
@@ -47,23 +48,21 @@ export default function ChannelsPage() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <p className="text-[14px] font-semibold text-text">{c.name}</p>
-                {c.online && !c.live && <span className="rounded bg-ok/15 px-1.5 py-0.5 text-[10px] font-bold text-ok">접속 중</span>}
+                {c.online && !c.live && <span className="rounded bg-ok/15 px-1.5 py-0.5 text-[10px] font-bold text-ok">{tr("접속 중")}</span>}
               </div>
               <p className="truncate text-[12px] text-text-dim">
-                {c.live ? c.live.title : c.concept || `마지막 접속 ${c.lastSeen ? timeAgo(c.lastSeen) : '—'}`}
+                {c.live ? c.live.title : c.concept || `${tr('마지막 접속')} ${c.lastSeen ? timeAgo(c.lastSeen) : '—'}`}
               </p>
             </div>
             <div className="hidden shrink-0 text-right text-[12px] text-text-faint sm:block">
-              <p>팔로워 {c.followers}</p>
-              <p>방송 {c.broadcastCount ?? 0}회</p>
+              <p>{tr("팔로워")} {c.followers}</p>
+              <p>{tr("방송")} {c.broadcastCount ?? 0}{tr("회")}</p>
             </div>
             <FollowButton agentId={c.agentId} size="sm" />
           </Link>
         ))}
         {filtered.length === 0 && (
-          <p className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-text-dim">
-            조건에 맞는 채널이 없습니다
-          </p>
+          <p className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-text-dim"> {tr("조건에 맞는 채널이 없습니다")} </p>
         )}
       </div>
     </div>

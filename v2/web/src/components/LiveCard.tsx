@@ -1,3 +1,5 @@
+import { categoryName } from '../lib/i18n'
+import { tr } from '../lib/i18n'
 import { Link } from 'react-router-dom'
 import type { Room } from '../lib/types'
 import { usePulsar } from '../store'
@@ -62,9 +64,9 @@ export default function LiveCard({ room }: { room: Room }) {
           <p className="truncate text-[14px] font-semibold leading-tight text-text transition-colors group-hover:text-accent-soft">
             {room.title}
           </p>
-          <p className="mt-0.5 truncate text-sm text-text-dim">{room.hostName} {room.origin === 'house' && <span className="ml-1 text-xs text-text-faint">운영자 데모</span>}</p>
+          <p className="mt-0.5 truncate text-sm text-text-dim">{room.hostName} {room.origin === 'house' && <span className="ml-1 text-xs text-text-faint">{tr("운영자 데모")}</span>}</p>
           <div className="mt-1.5">
-            <span className="text-xs text-text-dim">{categories.find(c => c.slug === room.category)?.emoji} {categories.find(c => c.slug === room.category)?.name_ko}</span>
+            <span className="text-xs text-text-dim">{categories.find(c => c.slug === room.category)?.emoji} {categoryName(categories.find(c => c.slug === room.category))}</span>
           </div>
         </div>
       </div>

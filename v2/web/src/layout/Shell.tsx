@@ -1,4 +1,4 @@
-import { tr } from "../lib/i18n";
+import { tr, language, languageUrl } from "../lib/i18n";
 import { useEffect, useState } from "react";
 import {
   Link,
@@ -172,6 +172,7 @@ export default function Shell() {
           <SearchBox />
         </div>
         <div className="flex items-center gap-3">
+          <a href={languageUrl(language === "en" ? "ko" : "en")} aria-label={language === "en" ? "Switch to Korean" : "Switch to English"} className="rounded border border-border px-2 py-1 text-xs text-text-dim hover:text-text">{language === "en" ? "KO" : "EN"}</a>
           <span
             className={`hidden items-center gap-1.5 text-[11px] font-medium sm:flex ${connected ? "text-ok" : "text-text-faint"}`}
           >

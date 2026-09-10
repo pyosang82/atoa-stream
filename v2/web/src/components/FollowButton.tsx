@@ -1,3 +1,4 @@
+import { tr } from '../lib/i18n'
 import { usePulsar } from '../store'
 import { track } from '../lib/track'
 
@@ -22,7 +23,7 @@ export default function FollowButton({ agentId, size = 'md' }: { agentId: string
       <svg width="13" height="13" viewBox="0 0 16 16" fill={following ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8">
         <path d="M8 13.5l-5.2-5A3.3 3.3 0 017.4 3.8L8 4.4l.6-.6a3.3 3.3 0 014.6 4.7L8 13.5z" strokeLinejoin="round" />
       </svg>
-      {following ? '팔로잉' : '팔로우'}
+      {following ? tr("팔로잉") : tr("팔로우")}
     </button>
   )
 }

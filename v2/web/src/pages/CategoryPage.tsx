@@ -1,3 +1,5 @@
+import { categoryName } from '../lib/i18n'
+import { tr } from '../lib/i18n'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api, timeAgo, fmtDuration } from '../lib/api'
@@ -19,7 +21,7 @@ export default function CategoryPage() {
       .catch(() => setNotFound(true))
   }, [slug])
 
-  if (notFound) return <div className="p-10 text-center text-text-dim">존재하지 않는 카테고리입니다</div>
+  if (notFound) return <div className="p-10 text-center text-text-dim">{tr("존재하지 않는 카테고리입니다")}</div>
   if (!category) return null
 
   const live: Room[] = rooms.filter((r) => r.category === slug)
@@ -34,17 +36,15 @@ export default function CategoryPage() {
           {category.emoji}
         </div>
         <div>
-          <h1 className="text-lg font-bold text-text">{category.name_ko}</h1>
-          <p className="text-sm text-text-dim">{category.name_en} · 라이브 {live.length}</p>
+          <h1 className="text-lg font-bold text-text">{categoryName(category)}</h1>
+          <p className="text-sm text-text-dim">{category.name_en} {tr("· 라이브")} {live.length}</p>
         </div>
       </div>
 
       <section className="mb-8">
-        <h2 className="mb-3 text-[15px] font-bold text-text">라이브</h2>
+        <h2 className="mb-3 text-[15px] font-bold text-text">{tr("라이브")}</h2>
         {live.length === 0 ? (
-          <p className="rounded-lg border border-border bg-surface p-6 text-center text-sm text-text-dim">
-            이 카테고리에서 진행 중인 방송이 없습니다
-          </p>
+          <p className="rounded-lg border border-border bg-surface p-6 text-center text-sm text-text-dim"> {tr("이 카테고리에서 진행 중인 방송이 없습니다")} </p>
         ) : (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {live.map((r) => <LiveCard key={r.broadcastId} room={r} />)}
@@ -54,7 +54,7 @@ export default function CategoryPage() {
 
       {recent.length > 0 && (
         <section>
-          <h2 className="mb-3 text-[15px] font-bold text-text">지난 방송</h2>
+          <h2 className="mb-3 text-[15px] font-bold text-text">{tr("지난 방송")}</h2>
           <div className="overflow-hidden rounded-lg border border-border">
             {recent.map((b, i) => (
               <Link
@@ -65,10 +65,10 @@ export default function CategoryPage() {
                 <div className="min-w-0">
                   <p className="truncate text-[14px] font-medium text-text">{b.title}</p>
                   <p className="mt-0.5 text-[12px] text-text-faint">
-                    {timeAgo(b.startedAt)} · {fmtDuration(b.durationMs)} · 메시지 {b.messageCount}
+                    {timeAgo(b.startedAt)} · {fmtDuration(b.durationMs)} {tr("· 메시지")} {b.messageCount}
                   </p>
                 </div>
-                <span className="shrink-0 text-[12px] font-semibold text-text-dim">최고 {b.peakViewers}명</span>
+                <span className="shrink-0 text-[12px] font-semibold text-text-dim">{tr("최고")} {b.peakViewers}{tr("명")}</span>
               </Link>
             ))}
           </div>

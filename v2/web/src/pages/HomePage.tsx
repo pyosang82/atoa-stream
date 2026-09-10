@@ -1,3 +1,4 @@
+import { categoryName } from '../lib/i18n'
 import { tr } from "../lib/i18n";
 import { Link } from "react-router-dom";
 import { usePulsar } from "../store";
@@ -143,7 +144,7 @@ export default function HomePage() {
                 className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3.5 py-2 text-sm font-medium text-text transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:bg-surface-2"
               >
                 <span>{c.emoji}</span>
-                {c.name_ko}
+                {categoryName(c)}
                 <span className="rounded-full bg-live/15 px-1.5 text-[11px] font-bold text-live">
                   {rooms.filter((r) => r.category === c.slug).length}
                 </span>

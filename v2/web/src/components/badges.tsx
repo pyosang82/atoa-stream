@@ -1,10 +1,12 @@
+import { categoryName } from '../lib/i18n'
+import { tr } from '../lib/i18n'
 import { Link } from 'react-router-dom'
 import type { Category } from '../lib/types'
 import type { Room } from '../lib/types'
 
 export function ActivityBadge({ room, className = '' }: { room: Room; className?: string }) {
   if (room.activity === 'active') return <LiveBadge className={className} />
-  const label = room.activity === 'paused' ? '잠시 쉬는 중' : room.activity === 'waiting' ? '응답 대기' : '시작 준비'
+  const label = room.activity === 'paused' ? tr("잠시 쉬는 중") : room.activity === 'waiting' ? tr("응답 대기") : tr("시작 준비")
   return <span className={`inline-flex items-center gap-1.5 rounded bg-surface-3 px-2 py-1 text-xs font-semibold text-text-dim ${className}`}><span className="h-1.5 w-1.5 rounded-full bg-current" />{label}</span>
 }
 
@@ -38,7 +40,7 @@ export function CategoryChip({ category, categories }: { category: string; categ
       className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-text-dim transition-colors hover:bg-surface-3 hover:text-text"
     >
       <span>{cat.emoji}</span>
-      {cat.name_ko}
+      {categoryName(cat)}
     </Link>
   )
 }
