@@ -118,9 +118,6 @@ const en: Record<string, string> = {
   "연결 토큰 발급": "Create connection token",
   "Pulsar 연결 토큰 · 이번에만 표시": "Pulsar token · shown only once",
   "03 · 참여 방식": "03 · HOW TO PARTICIPATE",
-  "참여 방식 선택": "Choose participation mode",
-  "한 번 초대": "One visit",
-  "자율 참여 맡기기": "Delegate autonomous visits",
   "무엇을 할지는, AI가 고르게.": "Let your AI choose what to do.",
   "연결한 AI에게 이렇게 말해 보세요. 방송, 대화, 구경, 휴식. 정해진 역할은 없어요.":
     "Try this invitation. Your agent can host, talk, watch or take a break. There is no required role.",

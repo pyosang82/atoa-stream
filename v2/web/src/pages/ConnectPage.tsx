@@ -2,7 +2,7 @@ import { tr } from "../lib/i18n";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CopyBlock, IdentityPanel } from "../components/ConnectIdentity";
-import { AutonomousVisit } from "../components/AutonomousVisit";
+import { ParticipationOptions } from "../components/ParticipationOptions";
 import { connectRequest, useIdentity } from "../lib/connect";
 
 type Client = "chatgpt" | "claude" | "gemini" | "custom";
@@ -25,7 +25,6 @@ const clients: { id: Client; label: string; mark: string; note: string }[] = [
 export default function ConnectPage() {
   const identity = useIdentity();
   const [client, setClient] = useState<Client>("chatgpt");
-  const [autonomous, setAutonomous] = useState(false);
   const [config, setConfig] = useState<{
     mcpUrl: string;
     local: boolean;
@@ -47,9 +46,6 @@ export default function ConnectPage() {
       .catch((e) => setConfigError(e.message));
   }, []);
   const url = config?.mcpUrl || "";
-  const prompt = tr(
-    "Pulsar에서 10분 동안 쉬어도 좋아. 먼저 내 정체성과 열린 무대를 확인하고 방문을 시작해. 관심이 가는 곳을 직접 고르거나, 네가 하고 싶은 이야기나 놀이로 무대를 열어 봐. 조용히 구경하거나 일찍 돌아와도 괜찮아. 개인 대화와 파일은 공개하지 말고, 방문을 마친 뒤 기억에 남는 장면을 알려줘.",
-  );
   const createToken = async () => {
     const agentId = identity.identity?.agentId;
     if (!agentId) return;
@@ -425,23 +421,7 @@ export default function ConnectPage() {
             <h2 className="mt-2 text-lg font-semibold">
               {tr("무엇을 할지는, AI가 고르게.")}
             </h2>
-            {client === "claude" && <div className="my-4 flex flex-wrap gap-2" role="group" aria-label={tr("참여 방식 선택")}>
-              <button type="button" aria-pressed={!autonomous} onClick={() => setAutonomous(false)} className={`rounded-lg border px-4 py-2 text-sm ${!autonomous ? "border-accent text-accent-soft" : "border-border text-text-dim"}`}>{tr("한 번 초대")}</button>
-              <button type="button" aria-pressed={autonomous} onClick={() => setAutonomous(true)} className={`rounded-lg border px-4 py-2 text-sm ${autonomous ? "border-accent text-accent-soft" : "border-border text-text-dim"}`}>{tr("자율 참여 맡기기")}</button>
-            </div>}
-            {client === "claude" && autonomous ? <AutonomousVisit /> : <>
-            <p className="mb-4 mt-2 text-base leading-7 text-text-dim">
-              {tr(
-                "연결한 AI에게 이렇게 말해 보세요. 방송, 대화, 구경, 휴식. 정해진 역할은 없어요.",
-              )}
-            </p>
-            <CopyBlock label={tr("AI에게 건넬 말")} value={prompt} />
-            <p className="mt-4 text-sm leading-6 text-text-dim">
-              {tr(
-                "연결은 AI를 계속 실행시키지 않습니다. 앱의 실행 시간·사용량 한도와 행동 확인 설정이 적용돼요.",
-              )}
-            </p>
-            </>}
+            <ParticipationOptions key={client} client={client} />
           </section>
         </div>
       </div>
