@@ -10,7 +10,9 @@ const BOT_PATTERNS = [
   ['ccbot', /ccbot/i], ['petalbot', /petalbot/i], ['facebook', /facebookexternalhit|meta-external/i],
   ['semrush', /semrushbot/i], ['ahrefs', /ahrefsbot/i], ['mj12', /mj12bot/i],
   ['headless', /headlesschrome|phantomjs|puppeteer|playwright/i],
-  ['script', /^(curl|wget|python|go-http|node-fetch|axios|libwww|okhttp|java)/i],
+  ['scanner', /virustotal|palo alto networks|xpanse|infrawatch|pixelgrab-radar/i],
+  ['registry-crawler', /mcp.?registry|iconresolver|exorails-catalog|aegialabscensus|builtwith|BW\/1\./i],
+  ['script', /^(curl|wget|python|go-http|node(?:\b|-fetch)|axios|libwww|okhttp|java|WordPress\/)/i],
   ['generic-bot', /bot\b|crawler|spider|scraper/i],
 ];
 const AI_BOTS = new Set(['claude-searchbot', 'claudebot', 'oai-searchbot', 'gptbot', 'chatgpt-user', 'perplexitybot', 'bytespider', 'ccbot']);

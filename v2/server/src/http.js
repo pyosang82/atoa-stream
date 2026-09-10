@@ -346,7 +346,7 @@ async function handleRequest(req, res) {
       const body = await readJson(req);
       if (!body) return json(res, 400, { error: 'invalid json' });
       const key = viewerKey(req, res);
-      const n = analytics.logEvents(key, body);
+      const n = analytics.logEvents(key, body, req);
       return json(res, 200, { ok: true, logged: n });
     }
 
@@ -355,12 +355,12 @@ async function handleRequest(req, res) {
       // owner-only: key lives in v2/server/data/admin-key.txt on the host
       if (!analytics.checkAdmin(req, u)) return json(res, 401, { error: 'admin key required' });
       // remember this browser as the owner's so its traffic can be excluded
-      analytics.markOwnerKey(getCookies(req).pv_id);
+      analytics.markOwnerRequest(req, getCookies(req).pv_id);
 
       if (anMatch[1] === 'auth') return json(res, 200, { ok: true });
 
       const days = Math.max(1, Math.min(90, Number(u.searchParams.get('days')) || 14));
-      const ex = { keys: [], channels: [] };
+      const ex = { keys: [], channels: [], excludeSelf: u.searchParams.get('excludeSelf') !== '0' };
       if (u.searchParams.get('excludeSelf') !== '0') ex.keys = analytics.getOwnerKeys();
       if (u.searchParams.get('excludeOwnAgents') === '1') ex.channels = repo.getInternalAgentIds();
 
@@ -377,7 +377,7 @@ async function handleRequest(req, res) {
           return json(res, 200, c);
         }
         case 'crawlers': return json(res, 200, analytics.crawlers(days));
-        case 'realtime': return json(res, 200, analytics.realtime(state));
+        case 'realtime': return json(res, 200, analytics.realtime(state, ex));
       }
     }
 

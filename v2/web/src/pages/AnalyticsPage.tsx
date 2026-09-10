@@ -7,6 +7,7 @@ interface Overview {
   daily: { day: string; visitors: number; pageviews: number; sessions: number; watch_seconds: number; follows: number }[]
   totals: { visitors: number; pageviews: number; sessions: number; watch_seconds: number }
   guideHits: number
+  unclassified?: { browsers: number; pageviews: number }
 }
 interface Acquisition {
   referrers: { domain: string; hits: number; uniques: number }[]
@@ -156,7 +157,7 @@ export default function AnalyticsPage() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-bold text-text">트래픽 분석 <span className="align-middle text-[11px] font-semibold text-text-faint">🔒 소유자 전용</span></h1>
-          <p className="text-[12px] text-text-dim">사람 방문자 기준(봇 제외) · IP는 해시로만 저장 · 90일 보존</p>
+          <p className="text-[12px] text-text-dim">브라우저 식별값 기준 · 알려진 봇·로컬 제외 · IP는 해시로만 저장 · 사람 수와 다를 수 있습니다</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Toggle on={exSelf} onChange={setExSelf} label="내 트래픽 제외" />
@@ -177,19 +178,25 @@ export default function AnalyticsPage() {
 
       {/* realtime + totals */}
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <StatTile label="실시간 접속" value={String(rt?.connectedWeb ?? '—')} sub="웹 소켓 연결" accent />
+        <StatTile label="실시간 접속" value={String(rt?.connectedWeb ?? '—')} sub={exSelf ? '본인 네트워크·브라우저 제외' : '봇·로컬 제외'} accent />
         <StatTile label="최근 5분 활동" value={String(rt?.activeLast5m ?? '—')} />
-        <StatTile label="방문자" value={String(ov?.totals.visitors ?? '—')} sub={`${days}일`} />
+        <StatTile label="방문 브라우저" value={String(ov?.totals.visitors ?? '—')} sub={`${days}일 · 사람 수 아님`} />
         <StatTile label="페이지뷰" value={String(ov?.totals.pageviews ?? '—')} />
         <StatTile label="세션" value={String(ov?.totals.sessions ?? '—')} />
         <StatTile label="총 시청시간" value={ov ? fmtWatch(ov.totals.watch_seconds) : '—'} />
       </div>
 
+      <p className="mb-5 rounded-lg border border-border bg-surface p-3 text-[12px] text-text-dim">
+        본인 제외는 등록된 집·회사 네트워크와 브라우저에 적용됩니다. 네트워크가 바뀐 기기에서는 관리 페이지에 로그인해 제외 정보를 갱신하세요.
+        과거 분류 미확인 기록 {ov?.unclassified?.pageviews ?? 0}회 조회({ov?.unclassified?.browsers ?? 0}개 브라우저)는 위 집계에서 제외했습니다.
+        이 수치는 외부 에이전트 등록 실적이 아닙니다.
+      </p>
+
       <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Panel title="일별 방문자" sub={`최근 ${days}일`}>
+        <Panel title="일별 방문 브라우저" sub={`최근 ${days}일`}>
           <BarChart
             data={(ov?.daily ?? []).map((d) => ({ label: d.day.slice(5), value: d.visitors }))}
-            valueLabel={(d) => `${d.label} · 방문자 ${d.value}`}
+            valueLabel={(d) => `${d.label} · 방문 브라우저 ${d.value}`}
           />
         </Panel>
         <Panel title="일별 시청시간" sub="분 단위">

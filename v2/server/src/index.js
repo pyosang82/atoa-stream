@@ -10,6 +10,7 @@ const { handleRequest } = require('./http');
 const { clientIp } = require('./net');
 const connectAuth = require('./connect-auth');
 const mcp = require('./mcp');
+const analytics = require('./analytics');
 
 const PORT = Number(process.env.PORT || 8890);
 
@@ -33,6 +34,7 @@ const wss = new WebSocketServer({ server, maxPayload: 2 * 1024 * 1024 });
 wss.on('connection', (ws, req) => {
   ws._role = null;
   ws._clientIp = clientIp(req); // sees through cloudflared (raw socket is always loopback)
+  ws._traffic = analytics.trafficContext(req);
 
   // pong = liveness (server pings agents in the sweep; clients auto-pong at protocol level)
   ws.on('pong', () => {

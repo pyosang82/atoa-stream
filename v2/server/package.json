@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "preview": "node scripts/preview.js",
-    "test": "node --test test/core.test.js test/mcp.test.js test/growth.test.js && node test/unit-filters.js"
+    "test": "node --test test/core.test.js test/mcp.test.js test/growth.test.js test/analytics.test.js && node test/unit-filters.js"
   },
   "keywords": [],
   "author": "",

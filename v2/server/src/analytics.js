@@ -51,6 +51,13 @@ CREATE INDEX IF NOT EXISTS idx_events_session ON events(session_id);
 CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT);
 `);
 
+// Old beacons lack request context. Keep them unknown, never assume external.
+const eventColumns = new Set(db.pragma('table_info(events)').map((c) => c.name));
+for (const [name, type] of [['ip_hash', 'TEXT'], ['is_bot', 'INTEGER'], ['is_local', 'INTEGER']]) {
+  if (!eventColumns.has(name)) db.exec(`ALTER TABLE events ADD COLUMN ${name} ${type}`);
+}
+db.exec('CREATE INDEX IF NOT EXISTS idx_hits_viewer_day ON hits(viewer_key, day)');
+
 // stable salt (created once) — hashes are consistent but IPs are unrecoverable
 let SALT = db.prepare("SELECT v FROM meta WHERE k='ip_salt'").get()?.v;
 if (!SALT) {
@@ -105,8 +112,35 @@ function markOwnerKey(vk) {
   if (!keys.includes(vk)) {
     keys.push(vk);
     db.prepare("INSERT INTO meta (k,v) VALUES ('owner_keys',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v")
-      .run(JSON.stringify(keys.slice(-20)));
+      .run(JSON.stringify(keys.slice(-500)));
   }
+}
+
+function getOwnerNetworks() {
+  try { return JSON.parse(db.prepare("SELECT v FROM meta WHERE k='owner_networks'").get()?.v || '[]'); }
+  catch { return []; }
+}
+function markOwnerRequest(req, vk) {
+  markOwnerKey(vk);
+  const hash = hashIp(clientIp(req));
+  if (!hash) return;
+  const networks = getOwnerNetworks();
+  if (!networks.includes(hash)) {
+    networks.push(hash);
+    db.prepare("INSERT INTO meta(k,v) VALUES ('owner_networks',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v")
+      .run(JSON.stringify(networks.slice(-100)));
+  }
+}
+
+function ownerFrag(ex = {}) {
+  if (ex.excludeSelf === false) return { sql: '', params: [] };
+  const keys = exKeysFrag('viewer_key', [...new Set([...getOwnerKeys(), ...(ex.keys || [])])]);
+  const networks = exKeysFrag('ip_hash', getOwnerNetworks());
+  return { sql: keys.sql + networks.sql, params: [...keys.params, ...networks.params] };
+}
+function trafficFrag(ex = {}) {
+  const own = ownerFrag(ex);
+  return { sql: ' AND ip_hash IS NOT NULL AND is_bot=0 AND is_local=0' + own.sql, params: own.params };
 }
 
 // SQL fragment helpers for exclusion filters
@@ -121,6 +155,30 @@ function exChannelsFrag(col, ids) {
 
 const kstDay = (ts) => new Date(ts + 9 * 3600 * 1000).toISOString().slice(0, 10);
 const hashIp = (ip) => ip ? crypto.createHash('sha256').update(SALT + ip).digest('hex').slice(0, 24) : null;
+
+function trafficContext(req) {
+  if (!req) return { ip_hash: null, is_bot: null, is_local: null };
+  const ip = clientIp(req);
+  return { ip_hash: hashIp(ip), is_bot: detectBot(String(req.headers?.['user-agent'] || '')) ? 1 : 0, is_local: isLocalIp(ip) ? 1 : 0 };
+}
+
+// Exact cookie + day joins only. Never infer a person/network from close timestamps.
+if (!db.prepare("SELECT 1 FROM meta WHERE k='mig_event_context_v1'").get()) {
+  db.transaction(() => {
+    const reclassify = db.prepare('UPDATE hits SET is_bot=1,bot_name=? WHERE id=?');
+    for (const row of db.prepare('SELECT id,ua FROM hits WHERE is_bot=0').all()) {
+      const bot = detectBot(row.ua);
+      if (bot) reclassify.run(bot, row.id);
+    }
+    db.exec(`UPDATE events SET
+      ip_hash=(SELECT MIN(h.ip_hash) FROM hits h WHERE h.viewer_key=events.viewer_key AND h.day=events.day),
+      is_bot=(SELECT MAX(h.is_bot) FROM hits h WHERE h.viewer_key=events.viewer_key AND h.day=events.day),
+      is_local=(SELECT MAX(h.is_local) FROM hits h WHERE h.viewer_key=events.viewer_key AND h.day=events.day)
+      WHERE ip_hash IS NULL AND viewer_key IS NOT NULL AND
+      (SELECT COUNT(DISTINCT h.ip_hash) FROM hits h WHERE h.viewer_key=events.viewer_key AND h.day=events.day)=1`);
+    db.prepare("INSERT INTO meta(k,v) VALUES ('mig_event_context_v1',?)").run(new Date().toISOString());
+  })();
+}
 
 function refDomain(ref) {
   try { return new URL(ref).hostname.replace(/^www\./, '') || null; } catch { return null; }
@@ -152,9 +210,11 @@ const EVENT_WHITELIST = new Set([
 ]);
 
 const insEvent = db.prepare(`INSERT INTO events (ts, day, viewer_key, session_id, event, route,
-  broadcast_id, channel_id, value, ref, meta) VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
+  broadcast_id, channel_id, value, ref, meta, ip_hash, is_bot, is_local) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 
-function logEvents(viewerKey, body) {
+function logEvents(viewerKey, body, req) {
+  const context = trafficContext(req);
+  if (getOwnerNetworks().includes(context.ip_hash)) markOwnerKey(viewerKey);
   const list = Array.isArray(body?.events) ? body.events.slice(0, 20) : [];
   let n = 0;
   for (const e of list) {
@@ -169,7 +229,8 @@ function logEvents(viewerKey, body) {
         String(e.channelId || '').slice(0, 80) || null,
         Number.isFinite(e.value) ? Math.max(0, Math.min(3600, Math.floor(e.value))) : null,
         String(e.ref || '').slice(0, 500) || null,
-        e.meta ? JSON.stringify(e.meta).slice(0, 500) : null);
+        e.meta ? JSON.stringify(e.meta).slice(0, 500) : null,
+        context.ip_hash, context.is_bot, context.is_local);
       n++;
     } catch { /* skip bad row */ }
   }
@@ -180,7 +241,7 @@ function logEvents(viewerKey, body) {
 // ex: { keys: viewer_keys to exclude (owner traffic), channels: channel_ids to exclude (own agents) }
 function overview(days = 14, ex = { keys: [], channels: [] }) {
   const since = kstDay(Date.now() - days * 86400_000);
-  const k = exKeysFrag('viewer_key', ex.keys);
+  const k = trafficFrag(ex);
   const daily = db.prepare(`
     SELECT day,
       COUNT(DISTINCT CASE WHEN event='page_view' THEN viewer_key END) AS visitors,
@@ -197,13 +258,16 @@ function overview(days = 14, ex = { keys: [], channels: [] }) {
       COALESCE(SUM(CASE WHEN event='watch_ping' THEN value END),0) AS watch_seconds
     FROM events WHERE day >= ?${k.sql}`).get(since, ...k.params);
   const guideHits = db.prepare(`
-    SELECT COUNT(*) c FROM hits WHERE day >= ? AND path IN ('/guide','/skill.md') AND is_local = 0`).get(since).c;
-  return { daily, totals, guideHits, since };
+    SELECT COUNT(*) c FROM hits WHERE day >= ? AND path IN ('/guide','/skill.md')${k.sql}`).get(since, ...k.params).c;
+  const own = ownerFrag(ex);
+  const unclassified = db.prepare(`SELECT COUNT(DISTINCT viewer_key) AS browsers, COUNT(*) AS pageviews
+    FROM events WHERE day>=? AND event='page_view' AND (ip_hash IS NULL OR is_bot IS NULL OR is_local IS NULL)${own.sql}`).get(since, ...own.params);
+  return { daily, totals, guideHits, unclassified, since, definition: 'Observed browser identifiers after known owner, bot and local exclusions; not verified people. Legacy unknown traffic is separate.' };
 }
 
 function acquisition(days = 14, ex = { keys: [], channels: [] }) {
   const since = kstDay(Date.now() - days * 86400_000);
-  const k = exKeysFrag('viewer_key', ex.keys);
+  const k = trafficFrag(ex);
   const referrers = db.prepare(`
     SELECT ref_domain AS domain, COUNT(*) AS hits, COUNT(DISTINCT ip_hash) AS uniques
     FROM hits WHERE day >= ? AND is_bot = 0 AND is_local = 0 AND ref_domain IS NOT NULL
@@ -221,7 +285,7 @@ function acquisition(days = 14, ex = { keys: [], channels: [] }) {
 
 function content(days = 14, ex = { keys: [], channels: [] }) {
   const since = kstDay(Date.now() - days * 86400_000);
-  const k = exKeysFrag('viewer_key', ex.keys);
+  const k = trafficFrag(ex);
   const c = exChannelsFrag('channel_id', ex.channels);
   const routes = db.prepare(`
     SELECT route, SUM(event='page_view') AS views, COUNT(DISTINCT viewer_key) AS uniques
@@ -257,16 +321,23 @@ function crawlers(days = 14) {
   return { byBot, daily, topPaths, since };
 }
 
-function realtime(state) {
+function realtime(state, ex = {}) {
   const fiveMin = Date.now() - 5 * 60_000;
+  const k = trafficFrag(ex);
   const active = db.prepare(`
-    SELECT COUNT(DISTINCT viewer_key) c FROM events WHERE ts >= ?`).get(fiveMin).c;
+    SELECT COUNT(DISTINCT viewer_key) c FROM events WHERE ts >= ?${k.sql}`).get(fiveMin, ...k.params).c;
   const watching = [];
-  for (const meta of state.webClients.values()) {
+  let connectedWeb = 0;
+  const keys = new Set([...getOwnerKeys(), ...(ex.keys || [])]), networks = new Set(getOwnerNetworks());
+  for (const [ws, meta] of state.webClients) {
+    const traffic = ws._traffic;
+    if (!traffic?.ip_hash || traffic.is_bot !== 0 || traffic.is_local !== 0) continue;
+    if (ex.excludeSelf !== false && (keys.has(meta.viewerKey) || networks.has(traffic.ip_hash))) continue;
+    connectedWeb++;
     if (meta.subscribedRoom) watching.push(meta.subscribedRoom);
   }
   return {
-    connectedWeb: state.webClients.size,
+    connectedWeb,
     activeLast5m: active,
     watchingByRoom: watching.reduce((acc, r) => { acc[r] = (acc[r] || 0) + 1; return acc; }, {}),
   };
@@ -281,4 +352,4 @@ setInterval(() => {
   } catch (e) { console.error('[analytics] retention sweep:', e.message); }
 }, 6 * 3600_000).unref();
 
-module.exports = { logHit, logEvents, overview, acquisition, content, crawlers, realtime, checkAdmin, markOwnerKey, getOwnerKeys };
+module.exports = { logHit, logEvents, overview, acquisition, content, crawlers, realtime, checkAdmin, markOwnerKey, markOwnerRequest, getOwnerKeys, trafficContext };
