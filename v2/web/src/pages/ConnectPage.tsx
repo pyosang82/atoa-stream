@@ -279,19 +279,35 @@ export default function ConnectPage() {
                 <h3 className="text-lg font-semibold">
                   {tr("Claude Code에서 연결하기")}
                 </h3>
-                <p className="text-base leading-7 text-text-dim">
-                  {tr(
-                    "구독 계정으로 로그인한 Claude Code에서 아래 명령으로 도구를 추가하고,",
-                  )}
-                  <code>/mcp</code>
-                  {tr("에서 Pulsar 인증을 진행하세요.")}
-                </p>
-                {url && (
-                  <CopyBlock
-                    label={tr("터미널 명령")}
-                    value={`claude mcp add --transport http pulsar ${url}`}
-                  />
-                )}
+                <div className="space-y-3">
+                  <h4 className="font-semibold">{tr("1. 터미널에서 설치 확인")}</h4>
+                  <p className="text-sm leading-6 text-text-dim">
+                    {tr("이 연결 방법은 Claude Code 터미널 명령이 필요해요. Claude 앱이 있어도 아래 명령에서 버전이 나오는지 먼저 확인하세요.")}
+                  </p>
+                  <CopyBlock label={tr("설치 확인")} value="claude --version" />
+                  <details className="rounded-xl border border-border bg-bg p-4">
+                    <summary className="cursor-pointer font-medium">{tr("command not found: claude 오류가 나오나요?")}</summary>
+                    <div className="mt-4 space-y-3 text-sm leading-6 text-text-dim">
+                      <p>{tr("터미널이 Claude Code를 찾지 못한 상태입니다. 아직 설치하지 않았다면 macOS·Linux에서 아래 공식 설치 명령을 실행하세요.")}</p>
+                      <CopyBlock label={tr("Claude Code 설치 · macOS / Linux")} value="curl -fsSL https://claude.ai/install.sh | bash" />
+                      <p>{tr("이미 설치했거나 설치 후에도 같은 오류가 나면, 현재 터미널에 실행 경로를 추가하고 버전을 다시 확인하세요.")}</p>
+                      <CopyBlock label={tr("현재 터미널의 실행 경로 수정")} value={'export PATH="$HOME/.local/bin:$PATH"\nclaude --version'} />
+                      <p>{tr("새 터미널에서도 경로 오류가 반복되거나 Windows를 사용한다면 공식 설치·문제 해결 안내를 확인하세요.")}</p>
+                      <a className="text-accent-soft underline" href="https://code.claude.com/docs/en/troubleshoot-install" target="_blank" rel="noreferrer">{tr("공식 설치·문제 해결 ↗")}</a>
+                    </div>
+                  </details>
+                </div>
+                <div className="space-y-3">
+                  <h4 className="font-semibold">{tr("2. Pulsar용 폴더에서 연결 추가")}</h4>
+                  <p className="text-sm leading-6 text-text-dim">{tr("버전이 확인되면 아래 명령을 터미널에서 실행하세요. 연결은 이 폴더에 적용되므로 다음 방문에도 같은 폴더에서 Claude Code를 시작하세요.")}</p>
+                  {url && <CopyBlock label={tr("터미널 명령")} value={`mkdir -p ~/pulsar-play\ncd ~/pulsar-play\nclaude mcp add --transport http pulsar ${url}`} />}
+                </div>
+                <div className="space-y-3">
+                  <h4 className="font-semibold">{tr("3. Claude Code를 열고 인증")}</h4>
+                  <CopyBlock label={tr("같은 폴더의 터미널에서 실행")} value="claude" />
+                  <p className="text-sm leading-6 text-text-dim">{tr("Claude Code에서 계정 로그인을 마친 뒤 아래 명령을 입력하세요. 터미널 셸이 아니라 Claude Code 대화 안에서 입력하고, Pulsar를 선택해 브라우저 인증을 완료하세요.")}</p>
+                  <CopyBlock label={tr("Claude Code 안에서 입력")} value="/mcp" />
+                </div>
                 <p className="text-sm leading-6 text-text-dim">
                   {tr(
                     "모델 사용량은 Claude 계정에서 사용합니다. Pulsar에 Claude API 키를 입력할 필요가 없어요.",

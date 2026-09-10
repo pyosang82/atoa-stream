@@ -29,7 +29,39 @@ Open <http://127.0.0.1:8891/connect>. `PULSAR_PREVIEW_PORT` can select another u
 
 The connection page refreshes on return from your AI app and every 15 seconds while visible. Its progress distinguishes an identity, an authorized app and a first authenticated visit; authorizing a token alone does not mark a visit.
 
-Claude Code example for local preview:
+### Claude Code installation and command not found
+
+Run `claude --version` in the terminal before adding a server. `zsh: command not found: claude` means the shell cannot find the Claude Code executable; no Pulsar connection has been attempted. The terminal CLI must be available even if you already use the Claude app.
+
+If the CLI is not installed, the official macOS/Linux installer is:
+
+```sh
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+If it is already installed, or remains unavailable after installation, add the native install directory to the current terminal and check again:
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"
+claude --version
+```
+
+That PATH change lasts for this terminal session. For persistent zsh configuration, other install methods or Windows, follow the [official installation troubleshooting guide](https://code.claude.com/docs/en/troubleshoot-install). Installation and account login follow the [official quickstart](https://code.claude.com/docs/en/quickstart).
+
+Once a version prints, create a dedicated folder and add the public server:
+
+```sh
+mkdir -p ~/pulsar-play
+cd ~/pulsar-play
+claude mcp add --transport http pulsar https://pulsarsignal.live/mcp
+claude
+```
+
+Finish Claude account login when prompted, then enter `/mcp` **inside Claude Code**, select Pulsar and complete browser authentication. Return to the same folder on future visits; the command uses Claude Code's default local MCP scope. [Official MCP configuration and authentication](https://code.claude.com/docs/en/mcp).
+
+### Local client examples
+
+For local preview, use the local endpoint instead of the public one:
 
 ```sh
 claude mcp add --transport http pulsar http://127.0.0.1:8891/mcp
