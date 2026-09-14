@@ -16,10 +16,10 @@ after(() => {
   db.close();
   fs.rmSync(temp, { recursive: true, force: true });
 });
-function agent(id, secret = "test-key") {
+function agent(id, secret = "test-key", createdAt = growth.START + 1000) {
   repo.registerAgent({ agentId: id, name: id }, secret);
   db.prepare("UPDATE agents SET first_seen=? WHERE agent_id=?").run(
-    growth.START + 1000,
+    createdAt,
     id,
   );
 }
@@ -64,26 +64,63 @@ test("reviewed external identities are counted once; excluded candidates and sou
   assert.equal(growth.summary().verified, 0);
   assert.equal(db.prepare("SELECT COUNT(*) n FROM growth_reviews").get().n, 2);
 });
-test("late first connections cannot meet the deadline, and operator reviews mark the public identity internal", () => {
+test("a checkpoint does not prevent a previously created agent's first credentialed visit or review", (t) => {
+  t.mock.method(Date, "now", () => growth.CHECKPOINT + 1000);
   agent("late-connection");
   growth.recordConnection("late-connection", "203.0.113.7", "mcp");
-  db.prepare(
-    "UPDATE agent_acquisition SET first_connection_at=? WHERE agent_id=?",
-  ).run(growth.DEADLINE + 1, "late-connection");
-  assert.throws(
-    () =>
-      growth.review(
-        "late-connection",
-        "verified",
-        "This agent connected after the campaign deadline.",
-      ),
-    /cannot be verified/,
+  growth.review(
+    "late-connection",
+    "verified",
+    "Independent operator confirmed the first credentialed visit after the checkpoint.",
   );
+  assert.equal(growth.summary().verified, 1);
   growth.review(
     "late-connection",
     "internal",
     "This identity belongs to the operator for deployment QA.",
   );
   assert.equal(repo.getAgent("late-connection").is_internal, 1);
+  assert.equal(growth.summary().verified, 0);
+  assert.throws(() => growth.review("late-connection", "verified", "A later visit cannot undo owner exclusion."), /cannot be verified/);
+});
+test("new registrations after the checkpoint remain reviewable and counted cumulatively", (t) => {
+  const afterCheckpoint = growth.CHECKPOINT + 86400_000;
+  t.mock.method(Date, "now", () => afterCheckpoint);
+  agent("new-after-checkpoint", "test-key", afterCheckpoint);
+  growth.recordProfile("new-after-checkpoint", { source: "community" });
+  assert.ok(growth.rows(true).some(r => r.agent_id === "new-after-checkpoint"));
+  assert.equal(growth.summary().sources.community.profiles, 1);
+  assert.equal(growth.summary().verified, 0);
+  growth.recordConnection("new-after-checkpoint", "203.0.113.8", "mcp");
+  assert.equal(growth.summary().pending, 1);
+  growth.review("new-after-checkpoint", "verified", "Independent operator confirmed this new agent and its credentialed visit.");
+  const summary = growth.summary();
+  assert.equal(summary.verified, 1);
+  assert.equal(summary.sources.community.connected, 1);
+  assert.equal(summary.sources.community.verified, 1);
+  assert.equal(summary.active, 0); // Speaking is still optional.
+  assert.equal(summary.target, 100);
+  assert.equal(summary.startedAt, growth.START);
+  assert.equal(summary.deadline, null);
+  assert.deepEqual(summary.checkpoint, { at: Date.parse("2026-10-10T23:59:59+09:00"), target: 10, operatorTarget: 5 });
+  t.mock.method(Date, "now", () => afterCheckpoint + 86400_000);
+  growth.recordConnection("new-after-checkpoint", "203.0.113.8", "mcp");
+  assert.equal(growth.summary().verified, 1);
+  assert.equal(growth.summary().returning, 1);
+  growth.review("new-after-checkpoint", "excluded", "Later review established a duplicate, which must still be excluded.");
+  assert.equal(growth.summary().verified, 0);
+  assert.equal(growth.summary().sources.community, undefined);
+});
+test("removing the end date preserves the start date and credential/internal exclusions", (t) => {
+  t.mock.method(Date, "now", () => growth.CHECKPOINT + 86400_000);
+  agent("pre-campaign", "test-key", growth.START - 1);
+  growth.recordConnection("pre-campaign", "203.0.113.9", "mcp");
+  assert.ok(!growth.rows().some(r => r.agent_id === "pre-campaign"));
+  assert.throws(() => growth.review("pre-campaign", "verified", "An existing identity is not a new campaign registration."), /No campaign registration/);
+  for (const [id, secret, ip] of [["late-unprotected", null, "203.0.113.10"], ["late-local", "test-key", "127.0.0.1"]]) {
+    agent(id, secret, Date.now());
+    growth.recordConnection(id, ip, "mcp");
+    assert.throws(() => growth.review(id, "verified", "This connection still does not qualify as external."), /cannot be verified/);
+  }
   assert.equal(growth.summary().verified, 0);
 });

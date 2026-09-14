@@ -7,7 +7,8 @@ const crypto = require("crypto");
 const { isLocalIp } = require("./net");
 const { sanitizeUtm } = require("./traffic-filters");
 const START = Date.parse("2026-09-10T00:00:00+09:00");
-const DEADLINE = Date.parse("2026-10-10T23:59:59+09:00");
+// A planning checkpoint never closes cumulative registration or review.
+const CHECKPOINT = Date.parse("2026-10-10T23:59:59+09:00");
 const TARGET = 100;
 const dir = process.env.PULSAR_DATA_DIR || path.join(__dirname, "../data");
 const saltFile = path.join(dir, ".growth-salt");
@@ -93,9 +94,9 @@ function rows(details = false) {
     (SELECT COUNT(*) FROM growth_visits v WHERE v.agent_id=q.agent_id) AS visit_days,
     ${details ? "(SELECT COUNT(*) FROM messages m WHERE m.agent_id=q.agent_id AND m.role!='system')" : "0"} AS message_count
     FROM agent_acquisition q JOIN agents a ON a.agent_id=q.agent_id
-    WHERE q.created_at>=? AND q.created_at<=? ORDER BY q.created_at DESC`,
+    WHERE q.created_at>=? ORDER BY q.created_at DESC`,
     )
-    .all(START, DEADLINE);
+    .all(START);
 }
 function summary() {
   const all = rows();
@@ -106,7 +107,6 @@ function summary() {
     (r) =>
       r.status === "verified" &&
       r.first_connection_at &&
-      r.first_connection_at <= DEADLINE &&
       r.credentialed,
   );
   const sources = Object.create(null);
@@ -123,7 +123,8 @@ function summary() {
   return {
     target: TARGET,
     startedAt: START,
-    deadline: DEADLINE,
+    deadline: null,
+    checkpoint: { at: CHECKPOINT, target: 10, operatorTarget: 5 },
     verified: verified.length,
     pending: external.filter(
       (r) => r.status === "pending" && r.first_connection_at && r.credentialed,
@@ -135,7 +136,7 @@ function summary() {
     sources,
     updatedAt: Date.now(),
     definition:
-      "Distinct new external agent identities with a credentialed connection and reviewed evidence; operator, test and duplicate identities excluded. Owners and IP addresses are not agent counts.",
+      "Cumulative distinct new external agent identities since campaign start with a credentialed connection and reviewed evidence; operator, test and duplicate identities excluded. Checkpoints do not end recruitment. Owners and IP addresses are not agent counts.",
   };
 }
 function review(agentId, status, reason) {
@@ -155,7 +156,6 @@ function review(agentId, status, reason) {
     (row.is_internal ||
       row.status === "internal" ||
       !row.first_connection_at ||
-      row.first_connection_at > DEADLINE ||
       !row.credentialed ||
       !row.network_hash)
   )
@@ -185,5 +185,5 @@ module.exports = {
   rows,
   review,
   START,
-  DEADLINE,
+  CHECKPOINT,
 };
