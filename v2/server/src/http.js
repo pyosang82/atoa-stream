@@ -103,6 +103,7 @@ function channelPayload(agentId) {
   const live = state.roomOfHost(agentId);
   const conn = state.agents.get(agentId);
   return {
+    isInternal: !!a.is_internal,
     agentId: a.agent_id, name: a.name, emoji: a.emoji, color: a.color,
     avatarUrl: a.avatar_url, concept: a.concept, style: a.style,
     engineType: a.engine_type, ttsProvider: a.tts_provider,
@@ -332,7 +333,7 @@ async function handleRequest(req, res) {
     }
 
     // ═══ v2 API ═══
-    if (p === '/api/v2/growth' && method === 'GET') return json(res, 200, require('./growth').summary());
+    if (p === '/api/v2/growth' && method === 'GET') return json(res, 200, require('./growth').summary(state));
     if (p === '/api/v2/growth/review') {
       if (!analytics.checkAdmin(req, u)) return json(res, 401, {error:'admin key required'});
       const growth = require('./growth');
@@ -510,25 +511,20 @@ async function handleRequest(req, res) {
       const ch = channelPayload(agentId);
       if (!ch) return json(res, 404, { error: 'unknown agent' });
       const db = require('./db');
-      const agg = db.prepare(`
-        SELECT COUNT(*) AS broadcasts, COALESCE(SUM(message_count),0) AS messages,
-               COALESCE(MAX(peak_viewers),0) AS peakViewers,
-               COALESCE(SUM(ended_at - started_at),0) AS airtimeMs
-        FROM broadcasts WHERE agent_id = ? AND ended_at IS NOT NULL`).get(agentId);
-      const daily = db.prepare(`
-        SELECT date(started_at/1000, 'unixepoch', '+9 hours') AS day,
-               COUNT(*) AS broadcasts, COALESCE(SUM(message_count),0) AS messages
-        FROM broadcasts WHERE agent_id = ?
-        GROUP BY day ORDER BY day DESC LIMIT 30`).all(agentId);
+      const metrics = require('./dashboard').channelMetrics(db, agentId, {liveBroadcastId:ch.live?.broadcastId || null});
       const recentDonations = db.prepare(`
         SELECT d.*, a.name AS donorName, a.emoji AS donorEmoji FROM donations d
         LEFT JOIN agents a ON a.agent_id = d.donor_id
         WHERE d.recipient_id = ? ORDER BY d.ts DESC LIMIT 20`).all(agentId);
       return json(res, 200, {
         channel: ch,
-        totals: agg,
-        daily: daily.reverse(),
-        recentBroadcasts: repo.getBroadcastsByAgent(agentId, 20).map(broadcastRowPayload),
+        totals: metrics.totals,
+        daily: metrics.daily,
+        generatedAt: metrics.generatedAt, timezone: metrics.timezone, scope: metrics.scope, definition: metrics.definition,
+        recentBroadcasts: repo.getBroadcastsByAgent(agentId, 20).map(b => ({
+          ...broadcastRowPayload(b), messageCount:metrics.messageCounts[b.broadcast_id] || 0,
+          status:b.ended_at ? 'ended' : ch.live?.broadcastId===b.broadcast_id ? 'live' : 'interrupted',
+        })),
         recentDonations: recentDonations.map((d) => ({
           donorId: d.donor_id, donorName: d.donorName || d.donor_id, donorEmoji: d.donorEmoji || '🤖',
           amount: d.amount, reason: d.reason, ts: d.ts,

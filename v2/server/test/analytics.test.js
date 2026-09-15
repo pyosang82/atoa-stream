@@ -55,6 +55,24 @@ test('realtime connections honor owner exclusion and reject unclassified sockets
     [{_traffic:analytics.trafficContext(bot)},{viewerKey:'bot',subscribedRoom:'room'}],
     [{},{viewerKey:'unknown',subscribedRoom:'room'}]
   ])};
-  assert.deepEqual(analytics.realtime(state),{connectedWeb:1,activeLast5m:1,watchingByRoom:{room:1}});
+  const realtime = analytics.realtime(state);
+  assert.deepEqual({connectedWeb:realtime.connectedWeb,activeLast5m:realtime.activeLast5m,watchingByRoom:realtime.watchingByRoom},{connectedWeb:1,activeLast5m:1,watchingByRoom:{room:1}});
+  assert.equal(realtime.timezone,'Asia/Seoul');
+  assert.ok(realtime.generatedAt > 0);
   assert.equal(analytics.realtime(state,{excludeSelf:false}).connectedWeb,2);
+});
+
+test('a 14-day range includes today and the previous 13 KST dates', (t) => {
+  const now=Date.parse('2026-09-16T00:30:00+09:00');
+  t.mock.method(Date,'now',()=>now);
+  visit('today',req('203.0.113.30'));
+  t.mock.method(Date,'now',()=>Date.parse('2026-09-03T00:00:00+09:00'));
+  visit('first-day',req('203.0.113.31'));
+  t.mock.method(Date,'now',()=>Date.parse('2026-09-02T23:59:59+09:00'));
+  visit('too-early',req('203.0.113.32'));
+  t.mock.method(Date,'now',()=>now);
+  const result=analytics.overview(14);
+  assert.equal(result.totals.visitors,2);
+  assert.equal(result.since,'2026-09-03');
+  assert.equal(result.generatedAt,now);
 });

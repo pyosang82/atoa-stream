@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BarChart, LineChart, StatTile } from '../components/charts'
+import ParticipationSummary from '../components/ParticipationSummary'
 
 interface Overview {
   daily: { day: string; visitors: number; pageviews: number; sessions: number; watch_seconds: number; follows: number }[]
@@ -118,37 +119,59 @@ export default function AnalyticsPage() {
   const [adminKey, setAdminKey] = useState<string | null>(() => localStorage.getItem(KEY_LS))
   const [days, setDays] = useState(14)
   const [exSelf, setExSelf] = useState(true)
-  const [exAgents, setExAgents] = useState(false)
+  const [exAgents, setExAgents] = useState(true)
   const [ov, setOv] = useState<Overview | null>(null)
   const [acq, setAcq] = useState<Acquisition | null>(null)
   const [ct, setCt] = useState<Content | null>(null)
   const [cr, setCr] = useState<Crawlers | null>(null)
   const [rt, setRt] = useState<Realtime | null>(null)
+  const [errors, setErrors] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+  const [checkedAt, setCheckedAt] = useState<number | null>(null)
+  const [realtimeError, setRealtimeError] = useState(false)
+  const [realtimeAt, setRealtimeAt] = useState<number | null>(null)
 
   const authedFetch = useCallback((name: string, params = '') => {
     return fetch(`/api/v2/analytics/${name}?days=${days}&excludeSelf=${exSelf ? 1 : 0}&excludeOwnAgents=${exAgents ? 1 : 0}${params}`,
       { headers: { 'x-pulsar-admin': adminKey || '' } })
       .then((r) => {
         if (r.status === 401) { localStorage.removeItem(KEY_LS); setAdminKey(null); throw new Error('unauthorized') }
+        if (!r.ok) throw new Error(`조회 실패 (${r.status})`)
         return r.json()
       })
   }, [adminKey, days, exSelf, exAgents])
 
   useEffect(() => {
     if (!adminKey) return
-    authedFetch('overview').then(setOv).catch(() => {})
-    authedFetch('acquisition').then(setAcq).catch(() => {})
-    authedFetch('content').then(setCt).catch(() => {})
-    authedFetch('crawlers').then(setCr).catch(() => {})
+    let alive = true
+    setOv(null); setAcq(null); setCt(null); setCr(null); setErrors([]); setLoading(true); setCheckedAt(null)
+    const load = async () => {
+      const results = await Promise.allSettled(['overview','acquisition','content','crawlers'].map(name => authedFetch(name)))
+      if (!alive) return
+      const setters = [setOv,setAcq,setCt,setCr]
+      const labels = ['기간 통계','유입 경로','콘텐츠','크롤러']
+      results.forEach((r,i) => setters[i](r.status === 'fulfilled' ? r.value : null))
+      setErrors(results.flatMap((r,i) => r.status === 'rejected' ? [labels[i]] : []))
+      setCheckedAt(Date.now()); setLoading(false)
+    }
+    void load()
+    const timer = setInterval(load,30_000)
+    return () => { alive = false; clearInterval(timer) }
   }, [adminKey, authedFetch])
 
   useEffect(() => {
     if (!adminKey) return
-    const load = () => authedFetch('realtime').then(setRt).catch(() => {})
-    load()
-    const t = setInterval(load, 10_000)
-    return () => clearInterval(t)
+    let alive = true
+    setRt(null); setRealtimeError(false); setRealtimeAt(null)
+    const load = () => authedFetch('realtime').then(d => {
+      if (alive) { setRt(d); setRealtimeError(false); setRealtimeAt(d.generatedAt || Date.now()) }
+    }).catch(() => { if (alive) { setRt(null); setRealtimeError(true) } })
+    void load()
+    const timer = setInterval(load,10_000)
+    return () => { alive = false; clearInterval(timer) }
   }, [adminKey, authedFetch])
+
+  const emptyFor = (available: unknown, empty: string) => available ? empty : loading ? '조회 중…' : '조회하지 못했습니다 · 0건으로 해석하지 마세요'
 
   if (!adminKey) return <KeyGate onAuthed={setAdminKey} />
 
@@ -161,7 +184,7 @@ export default function AnalyticsPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Toggle on={exSelf} onChange={setExSelf} label="내 트래픽 제외" />
-          <Toggle on={exAgents} onChange={setExAgents} label="내 에이전트 채널 제외" />
+          <Toggle on={exAgents} onChange={setExAgents} label="채널 표에서 운영·내부 제외" />
           <div className="flex gap-1 rounded-md bg-surface-2 p-0.5">
             {[7, 14, 30, 90].map((d) => (
               <button key={d} onClick={() => setDays(d)}
@@ -176,10 +199,14 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+      <ParticipationSummary />
+      <p className="mb-2 text-xs text-text-dim">아래는 브라우저 트래픽입니다. 에이전트 등록·접속과 다릅니다. 기간은 오늘 포함 {days}개 KST 날짜이며, ‘채널 표’ 필터는 해당 표에만 적용됩니다.</p>
+      <p className="mb-3 text-xs text-text-faint">{checkedAt ? `기간 통계 마지막 조회 ${new Date(checkedAt).toLocaleString('ko-KR', {timeZone:'Asia/Seoul'})} KST · 30초마다 갱신` : '기간 통계 조회 중…'}{realtimeAt ? ` / 실시간 집계 ${new Date(realtimeAt).toLocaleTimeString('ko-KR', {timeZone:'Asia/Seoul'})} KST` : ''}</p>
+      {(errors.length > 0 || realtimeError) && <p className="mb-3 rounded-lg border border-live/40 p-3 text-sm text-live" role="alert">조회 실패: {[...errors, ...(realtimeError ? ['실시간'] : [])].join(', ')}. 해당 값은 ‘—’로 표시하며 자동으로 다시 조회합니다.</p>}
       {/* realtime + totals */}
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <StatTile label="실시간 접속" value={String(rt?.connectedWeb ?? '—')} sub={exSelf ? '본인 네트워크·브라우저 제외' : '봇·로컬 제외'} accent />
-        <StatTile label="최근 5분 활동" value={String(rt?.activeLast5m ?? '—')} />
+        <StatTile label="현재 브라우저 연결" value={String(rt?.connectedWeb ?? '—')} sub={exSelf ? '본인 네트워크·브라우저 제외' : '봇·로컬 제외'} accent />
+        <StatTile label="최근 5분 브라우저" value={String(rt?.activeLast5m ?? '—')} />
         <StatTile label="방문 브라우저" value={String(ov?.totals.visitors ?? '—')} sub={`${days}일 · 사람 수 아님`} />
         <StatTile label="페이지뷰" value={String(ov?.totals.pageviews ?? '—')} />
         <StatTile label="세션" value={String(ov?.totals.sessions ?? '—')} />
@@ -188,7 +215,7 @@ export default function AnalyticsPage() {
 
       <p className="mb-5 rounded-lg border border-border bg-surface p-3 text-[12px] text-text-dim">
         본인 제외는 등록된 집·회사 네트워크와 브라우저에 적용됩니다. 네트워크가 바뀐 기기에서는 관리 페이지에 로그인해 제외 정보를 갱신하세요.
-        과거 분류 미확인 기록 {ov?.unclassified?.pageviews ?? 0}회 조회({ov?.unclassified?.browsers ?? 0}개 브라우저)는 위 집계에서 제외했습니다.
+        과거 분류 미확인 기록 {ov?.unclassified?.pageviews ?? '—'}회 조회({ov?.unclassified?.browsers ?? '—'}개 브라우저)는 위 집계에서 제외했습니다.
         이 수치는 외부 에이전트 등록 실적이 아닙니다.
       </p>
 
@@ -211,7 +238,7 @@ export default function AnalyticsPage() {
       <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Panel title="유입 경로" sub="외부 리퍼러">
           <MiniTable
-            empty="아직 외부 유입이 없습니다"
+            empty={emptyFor(acq, "아직 외부 유입이 없습니다")}
             rows={[
               ...(acq ? [[`(직접 방문)`, String(acq.direct)] as [string, string]] : []),
               ...(acq?.referrers ?? []).map((r) => [r.domain, `${r.hits} (u${r.uniques})`] as [string, string]),
@@ -220,42 +247,42 @@ export default function AnalyticsPage() {
         </Panel>
         <Panel title="UTM 캠페인">
           <MiniTable
-            empty="UTM 태그 유입이 없습니다"
+            empty={emptyFor(acq, "UTM 태그 유입이 없습니다")}
             rows={(acq?.utm ?? []).map((r) => [`${r.source}${r.campaign ? ` / ${r.campaign}` : ''}`, String(r.hits)])}
           />
         </Panel>
         <Panel title="인기 검색어">
           <MiniTable
-            empty="검색 기록이 없습니다"
+            empty={emptyFor(ct, "검색 기록이 없습니다")}
             rows={(ct?.searches ?? []).filter((s) => s.q).map((s) => [s.q, `${s.n}회`])}
           />
         </Panel>
       </div>
 
       <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Panel title="채널별 시청시간" sub={exAgents ? '내 에이전트 제외' : `${days}일`}>
+        <Panel title="채널별 시청시간" sub={exAgents ? '운영·내부 채널 제외' : `${days}일`}>
           <MiniTable
-            empty="시청 기록이 없습니다"
+            empty={emptyFor(ct, "시청 기록이 없습니다")}
             rows={(ct?.channels ?? []).map((c) => [
-              `${c.emoji} ${c.name}${c.internal ? ' ·내 에이전트' : ''}`,
+            `${c.emoji} ${c.name}${c.internal ? ' ·운영·내부' : ''}`,
               `${fmtWatch(c.watch_seconds)} · ${c.watch_sessions}회 시청`,
             ])}
           />
         </Panel>
         <Panel title="인기 페이지">
           <MiniTable
-            empty="페이지뷰가 없습니다"
+            empty={emptyFor(ct, "페이지뷰가 없습니다")}
             rows={(ct?.routes ?? []).map((r) => [r.route, `${r.views} (u${r.uniques})`])}
           />
         </Panel>
       </div>
 
       {/* AI crawlers — this product's most important acquisition channel */}
-      <Panel title="🤖 AI·검색 크롤러" sub="에이전트 유입의 선행 지표 — /guide를 인덱싱하는 봇들">
+      <Panel title="문서 조회 · 자동 요청" sub="에이전트 등록/참여 수가 아님 · 봇 히트에는 위 제외 필터 미적용">
         <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <StatTile label="/guide 조회" value={String(ov?.guideHits ?? '—')} sub={`${days}일 (외부)`} accent />
-          <StatTile label="AI 크롤러 히트" value={String((cr?.daily ?? []).reduce((a, d) => a + d.ai_hits, 0))} />
-          <StatTile label="전체 봇 히트" value={String((cr?.daily ?? []).reduce((a, d) => a + d.all_hits, 0))} />
+          <StatTile label="/guide · skill 문서 요청" value={String(ov?.guideHits ?? '—')} sub={`${days}일 · 봇·로컬 제외, 방문 필터 적용`} accent />
+          <StatTile label="AI 크롤러 히트" value={cr ? String(cr.daily.reduce((a, d) => a + d.ai_hits, 0)) : '—'} />
+          <StatTile label="전체 봇 히트" value={cr ? String(cr.daily.reduce((a, d) => a + d.all_hits, 0)) : '—'} />
         </div>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div>
@@ -266,7 +293,7 @@ export default function AnalyticsPage() {
             />
           </div>
           <MiniTable
-            empty="봇 트래픽이 없습니다"
+            empty={emptyFor(cr, "봇 트래픽이 없습니다")}
             rows={(cr?.byBot ?? []).map((b) => [`${b.ai ? '🤖 ' : ''}${b.bot}`, `${b.hits}히트`])}
           />
         </div>

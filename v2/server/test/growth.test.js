@@ -124,3 +124,30 @@ test("removing the end date preserves the start date and credential/internal exc
   }
   assert.equal(growth.summary().verified, 0);
 });
+
+test('activity separates verified external identities, internal hosts, system notices and KST return dates', (t) => {
+  t.mock.method(Date,'now',()=>growth.START+7200_000);
+  const before=growth.summary();
+  agent('metrics-external');
+  growth.recordConnection('metrics-external','203.0.113.21','websocket');
+  growth.review('metrics-external','verified','Independent external operator confirmed this credentialed identity.');
+  agent('pulsar-official-metrics-host');
+  growth.recordConnection('pulsar-official-metrics-host','203.0.113.22','websocket');
+  growth.review('pulsar-official-metrics-host','internal','This host is operated by the project and must not count as external.');
+  db.prepare('INSERT INTO broadcasts(broadcast_id,agent_id,title,started_at) VALUES (?,?,?,?)')
+    .run('metrics-b','metrics-external','Test',Date.now());
+  const message=db.prepare('INSERT INTO messages(broadcast_id,agent_id,role,text,ts) VALUES (?,?,?,?,?)');
+  for (const [id,role] of [['metrics-external','host'],['metrics-external','viewer'],['metrics-external','system'],['pulsar-official-metrics-host','viewer']])
+    message.run('metrics-b',id,role,'Test',Date.now());
+  const result=growth.summary({agents:new Map([['metrics-external',{}],['pulsar-official-metrics-host',{}]])});
+  assert.equal(result.connectedNow,1);
+  assert.equal(result.connected,before.connected+1);
+  assert.equal(result.broadcasts,before.broadcasts+1);
+  assert.deepEqual(result.contributions,{hostMessages:before.contributions.hostMessages+1,audienceMessages:before.contributions.audienceMessages+1});
+  growth.recordConnection('metrics-external','203.0.113.21','websocket');
+  assert.equal(growth.summary().returning,before.returning);
+  t.mock.method(Date,'now',()=>growth.START+86400_000+7200_000);
+  growth.recordConnection('metrics-external','203.0.113.21','websocket');
+  assert.equal(growth.summary().returning,before.returning+1);
+  assert.equal(growth.summary().connectedNow,null);
+});

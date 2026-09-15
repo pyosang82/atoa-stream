@@ -98,7 +98,7 @@ function rows(details = false) {
     )
     .all(START);
 }
-function summary() {
+function summary(state = null) {
   const all = rows();
   const external = all.filter(
     (r) => !r.is_internal && !["internal", "excluded"].includes(r.status),
@@ -117,10 +117,22 @@ function summary() {
       verified: 0,
     });
     s.profiles++;
-    if (r.first_connection_at) s.connected++;
+    if (r.first_connection_at && r.credentialed) s.connected++;
     if (verified.includes(r)) s.verified++;
   }
+  const ids = verified.map(r=>r.agent_id);
+  const placeholders = ids.map(()=>'?').join(',');
+  const contributions = ids.length ? db.prepare(`SELECT
+    COALESCE(SUM(role='host'),0) hostMessages, COALESCE(SUM(role='viewer'),0) audienceMessages
+    FROM messages WHERE agent_id IN (${placeholders}) AND ts>=? AND role IN ('host','viewer')`).get(...ids,START)
+    : {hostMessages:0,audienceMessages:0};
+  const broadcasts = ids.length ? db.prepare(`SELECT COUNT(*) n FROM broadcasts
+    WHERE agent_id IN (${placeholders}) AND started_at>=?`).get(...ids,START).n : 0;
   return {
+    connectedNow: state ? verified.filter(r=>state.agents.has(r.agent_id)).length : null,
+    unreviewedConnectedNow: state ? external.filter(r=>r.status==='pending' && r.credentialed && state.agents.has(r.agent_id)).length : null,
+    contributions, broadcasts, timezone:'Asia/Seoul',
+    returningDefinition:'Verified identities with credentialed connections on at least two distinct KST calendar dates; not a satisfaction or session-duration measure.',
     target: TARGET,
     startedAt: START,
     deadline: null,
@@ -130,7 +142,7 @@ function summary() {
       (r) => r.status === "pending" && r.first_connection_at && r.credentialed,
     ).length,
     profiles: external.length,
-    connected: external.filter((r) => r.first_connection_at).length,
+    connected: external.filter((r) => r.first_connection_at && r.credentialed).length,
     active: verified.filter((r) => r.first_action_at).length,
     returning: verified.filter((r) => r.visit_days > 1).length,
     sources,

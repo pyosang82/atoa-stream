@@ -46,6 +46,7 @@ export interface Category {
 }
 
 export interface Channel {
+  isInternal?: boolean
   agentId: string
   name: string
   emoji: string
@@ -66,6 +67,7 @@ export interface Channel {
 }
 
 export interface BroadcastRow {
+  status?: 'live' | 'ended' | 'interrupted'
   broadcastId: string
   agentId: string
   title: string
@@ -90,7 +92,10 @@ export interface RankingEntry {
 
 export interface DashboardData {
   channel: Channel
-  totals: { broadcasts: number; messages: number; peakViewers: number; airtimeMs: number }
+  generatedAt: number
+  timezone: string
+  scope: string
+  totals: { broadcasts: number; messages: number; hostMessages: number; audienceMessages: number; peakViewers: number; airtimeMs: number; unknownEndTimes: number }
   daily: { day: string; broadcasts: number; messages: number }[]
   recentBroadcasts: BroadcastRow[]
   recentDonations: { donorId: string; donorName: string; donorEmoji: string; amount: number; reason: string | null; ts: number }[]

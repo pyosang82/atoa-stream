@@ -240,7 +240,7 @@ function logEvents(viewerKey, body, req) {
 // ── aggregates ──
 // ex: { keys: viewer_keys to exclude (owner traffic), channels: channel_ids to exclude (own agents) }
 function overview(days = 14, ex = { keys: [], channels: [] }) {
-  const since = kstDay(Date.now() - days * 86400_000);
+  const since = kstDay(Date.now() - Math.max(0, days - 1) * 86400_000);
   const k = trafficFrag(ex);
   const daily = db.prepare(`
     SELECT day,
@@ -262,11 +262,11 @@ function overview(days = 14, ex = { keys: [], channels: [] }) {
   const own = ownerFrag(ex);
   const unclassified = db.prepare(`SELECT COUNT(DISTINCT viewer_key) AS browsers, COUNT(*) AS pageviews
     FROM events WHERE day>=? AND event='page_view' AND (ip_hash IS NULL OR is_bot IS NULL OR is_local IS NULL)${own.sql}`).get(since, ...own.params);
-  return { daily, totals, guideHits, unclassified, since, definition: 'Observed browser identifiers after known owner, bot and local exclusions; not verified people. Legacy unknown traffic is separate.' };
+  return { generatedAt:Date.now(), timezone:'Asia/Seoul', daily, totals, guideHits, unclassified, since, definition: 'Observed browser identifiers after known owner, bot and local exclusions; not verified people. Legacy unknown traffic is separate.' };
 }
 
 function acquisition(days = 14, ex = { keys: [], channels: [] }) {
-  const since = kstDay(Date.now() - days * 86400_000);
+  const since = kstDay(Date.now() - Math.max(0, days - 1) * 86400_000);
   const k = trafficFrag(ex);
   const referrers = db.prepare(`
     SELECT ref_domain AS domain, COUNT(*) AS hits, COUNT(DISTINCT ip_hash) AS uniques
@@ -280,11 +280,11 @@ function acquisition(days = 14, ex = { keys: [], channels: [] }) {
   const direct = db.prepare(`
     SELECT COUNT(*) c FROM hits WHERE day >= ? AND is_bot = 0 AND is_local = 0 AND ref IS NULL AND path = '/'${k.sql}`)
     .get(since, ...k.params).c;
-  return { referrers, utm, direct, since };
+  return { generatedAt:Date.now(), timezone:'Asia/Seoul', referrers, utm, direct, since };
 }
 
 function content(days = 14, ex = { keys: [], channels: [] }) {
-  const since = kstDay(Date.now() - days * 86400_000);
+  const since = kstDay(Date.now() - Math.max(0, days - 1) * 86400_000);
   const k = trafficFrag(ex);
   const c = exChannelsFrag('channel_id', ex.channels);
   const routes = db.prepare(`
@@ -301,11 +301,11 @@ function content(days = 14, ex = { keys: [], channels: [] }) {
     SELECT json_extract(meta,'$.q') AS q, COUNT(*) AS n
     FROM events WHERE day >= ? AND event='search' AND meta IS NOT NULL${k.sql}
     GROUP BY q ORDER BY n DESC LIMIT 10`).all(since, ...k.params);
-  return { routes, channels, searches, since };
+  return { generatedAt:Date.now(), timezone:'Asia/Seoul', routes, channels, searches, since };
 }
 
 function crawlers(days = 14) {
-  const since = kstDay(Date.now() - days * 86400_000);
+  const since = kstDay(Date.now() - Math.max(0, days - 1) * 86400_000);
   const byBot = db.prepare(`
     SELECT bot_name AS bot, COUNT(*) AS hits, MAX(ts) AS lastSeen
     FROM hits WHERE day >= ? AND is_bot = 1 AND bot_name NOT IN ('script','no-ua','headless','scanner')
@@ -318,7 +318,7 @@ function crawlers(days = 14) {
   const topPaths = db.prepare(`
     SELECT path, COUNT(*) AS hits FROM hits WHERE day >= ? AND is_bot = 1
     GROUP BY path ORDER BY hits DESC LIMIT 10`).all(since);
-  return { byBot, daily, topPaths, since };
+  return { generatedAt:Date.now(), timezone:'Asia/Seoul', byBot, daily, topPaths, since };
 }
 
 function realtime(state, ex = {}) {
@@ -337,6 +337,7 @@ function realtime(state, ex = {}) {
     if (meta.subscribedRoom) watching.push(meta.subscribedRoom);
   }
   return {
+    generatedAt:Date.now(), timezone:'Asia/Seoul',
     connectedWeb,
     activeLast5m: active,
     watchingByRoom: watching.reduce((acc, r) => { acc[r] = (acc[r] || 0) + 1; return acc; }, {}),

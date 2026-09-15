@@ -6,6 +6,7 @@ import { api, timeAgo, fmtDuration } from '../lib/api'
 import type { Channel, DashboardData, ChatMessage } from '../lib/types'
 import { usePulsar } from '../store'
 import Avatar from '../components/Avatar'
+import ParticipationSummary from '../components/ParticipationSummary'
 import { LiveBadge } from '../components/badges'
 import { BarChart, LineChart, StatTile } from '../components/charts'
 
@@ -18,14 +19,20 @@ const saveMyAgents = (ids: string[]) => localStorage.setItem(LS_KEY, JSON.string
 function AgentPicker({ onPick, myAgents }: { onPick: (id: string) => void; myAgents: string[] }) {
   const [all, setAll] = useState<Channel[]>([])
   const [q, setQ] = useState('')
-  useEffect(() => { api.channels().then((d) => setAll(d.channels)).catch(() => {}) }, [])
+  const [listStatus, setListStatus] = useState('조회 중…')
+  useEffect(() => {
+    let alive = true
+    api.channels().then((d) => { if (alive) { setAll(d.channels); setListStatus('') } })
+      .catch(() => { if (alive) setListStatus('채널 목록을 조회하지 못했습니다. 닫았다가 다시 열어 주세요.') })
+    return () => { alive = false }
+  }, [])
   const filtered = all.filter((c) =>
     !myAgents.includes(c.agentId) &&
     (q ? (c.name + c.agentId).toLowerCase().includes(q.toLowerCase()) : true))
   return (
     <div className="rounded-xl border border-border bg-surface p-4">
       <p className="text-[14px] font-bold text-text">에이전트 추가</p>
-      <p className="mt-1 text-[12px] text-text-dim">플랫폼에 등록된 에이전트 중 내가 소유한 에이전트를 선택해 대시보드에 추가합니다.</p>
+      <p className="mt-1 text-[12px] text-text-dim">관찰할 채널을 이 브라우저의 목록에 추가합니다. 이 선택은 소유권 인증이 아닙니다.</p>
       <input
         value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름 또는 agentId 검색"
         className="mt-3 w-full rounded-md border border-border bg-surface-2 px-3 py-1.5 text-sm text-text placeholder:text-text-faint focus:border-accent focus:outline-none"
@@ -46,7 +53,7 @@ function AgentPicker({ onPick, myAgents }: { onPick: (id: string) => void; myAge
             <span className="text-[12px] font-bold text-accent">추가</span>
           </button>
         ))}
-        {filtered.length === 0 && <p className="py-4 text-center text-[12px] text-text-faint">결과 없음</p>}
+        {filtered.length === 0 && <p className="py-4 text-center text-[12px] text-text-faint">{listStatus || '결과 없음'}</p>}
       </div>
     </div>
   )
@@ -94,7 +101,10 @@ export default function DashboardPage() {
   const [channels, setChannels] = useState<Channel[]>([])
   const [data, setData] = useState<DashboardData | null>(null)
   const [showPicker, setShowPicker] = useState(false)
+  const [error, setError] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [lastStats, setLastStats] = useState<{ ts: number; value: number }[]>([])
+  const [statsError, setStatsError] = useState(false)
   const rooms = usePulsar((s) => s.rooms)
 
   const selected = agentId || myAgents[0] || null
@@ -104,9 +114,12 @@ export default function DashboardPage() {
   }, [rooms.length])
 
   useEffect(() => {
-    if (!selected) { setData(null); return }
+    if (!selected) { setData(null); setError(false); setLoading(false); return }
     let alive = true
-    const load = () => api.dashboard(selected).then((d) => { if (alive) setData(d) }).catch(() => {})
+    setData(null); setError(false); setLoading(true)
+    const load = () => api.dashboard(selected).then((d) => {
+      if (alive) { setData(d); setError(false); setLoading(false) }
+    }).catch(() => { if (alive) { setData(null); setError(true); setLoading(false) } })
     load()
     const t = setInterval(load, 15000)
     return () => { alive = false; clearInterval(t) }
@@ -114,11 +127,14 @@ export default function DashboardPage() {
 
   // viewer curve of latest ended broadcast
   useEffect(() => {
+    let alive = true
+    setLastStats([]); setStatsError(false)
     const last = data?.recentBroadcasts.find((b) => b.endedAt)
-    if (!last) { setLastStats([]); return }
+    if (!last) return
     api.broadcastStats(last.broadcastId)
-      .then((d) => setLastStats(d.samples.map((s) => ({ ts: s.ts, value: s.viewers }))))
-      .catch(() => setLastStats([]))
+      .then((d) => { if (alive) setLastStats(d.samples.map((s) => ({ ts: s.ts, value: s.viewers }))) })
+      .catch(() => { if (alive) { setLastStats([]); setStatsError(true) } })
+    return () => { alive = false }
   }, [data?.recentBroadcasts])
 
   const myChannels = useMemo(
@@ -136,7 +152,7 @@ export default function DashboardPage() {
     if (selected === id) nav('/dashboard')
   }
 
-  const liveRoom = data?.channel.live || rooms.find((r) => r.hostId === selected) || null
+  const liveRoom = data?.channel.live || null
   const days = (data?.daily ?? []).slice(-14)
 
   return (
@@ -162,6 +178,11 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      <ParticipationSummary />
+      {selected && loading && <p className="mb-4 text-sm text-text-dim" role="status">선택한 채널 통계 조회 중…</p>}
+      {selected && error && <p className="mb-4 rounded-lg border border-live/40 p-3 text-sm text-live" role="alert">선택한 채널을 조회하지 못했습니다. 이전 채널이나 오래된 숫자는 표시하지 않습니다. 15초마다 다시 조회합니다.</p>}
+      {data && <p className="mb-3 text-xs text-text-dim">선택 채널: {data.channel.name} · {data.channel.isInternal ? '운영·내부 계정 (외부 등록 실적 제외)' : '커뮤니티 계정 (외부 검증 여부와 별개)'} · 집계 {new Date(data.generatedAt).toLocaleString('ko-KR', {timeZone:'Asia/Seoul'})} KST<br />이 채널이 진행한 방송만 집계합니다. 다른 채널에서 한 관객 채팅은 포함하지 않습니다.</p>}
+      {data && data.totals.unknownEndTimes > 0 && <p className="mb-3 text-xs text-warn">종료 시각 미확인 방송 {data.totals.unknownEndTimes}건의 길이는 총 방송 시간에서 제외했습니다.</p>}
       {showPicker && <div className="mb-4"><AgentPicker onPick={addAgent} myAgents={myAgents} /></div>}
 
       {/* agent tabs */}
@@ -234,9 +255,9 @@ export default function DashboardPage() {
           {/* stat tiles */}
           <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <StatTile label="팔로워" value={String(data.channel.followers)} accent />
-            <StatTile label="총 방송" value={String(data.totals.broadcasts)} sub={`총 ${fmtDuration(data.totals.airtimeMs)}`} />
-            <StatTile label="총 메시지" value={data.totals.messages.toLocaleString()} />
-            <StatTile label="최고 동시 시청" value={String(data.totals.peakViewers)} />
+            <StatTile label="누적 개설 방송" value={String(data.totals.broadcasts)} sub={`현재 방송 포함 · ${fmtDuration(data.totals.airtimeMs)}`} />
+            <StatTile label="방송 내 실제 발언" value={data.totals.messages.toLocaleString()} sub={`진행 ${data.totals.hostMessages} · 관객 ${data.totals.audienceMessages} · 시스템 제외`} />
+            <StatTile label="최고 동시 관객" value={String(data.totals.peakViewers)} sub="내부·외부 에이전트 포함 · 사람 수 아님" />
             <StatTile label="받은 포인트" value={`${data.channel.pointsReceived.toLocaleString()}P`} sub={`후원 ${data.channel.donationCount}회`} />
             <StatTile label="보유 포인트" value={`${(data.channel.pointsBalance ?? 0).toLocaleString()}P`} />
           </div>
@@ -255,7 +276,7 @@ export default function DashboardPage() {
           {/* charts */}
           <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="rounded-xl border border-border bg-surface p-4">
-              <p className="mb-3 text-[13px] font-bold text-text">일별 방송 횟수 <span className="font-normal text-text-faint">최근 14일</span></p>
+              <p className="mb-3 text-[13px] font-bold text-text">일별 방송 횟수 <span className="font-normal text-text-faint">최근 14개 KST 날짜</span></p>
               <BarChart
                 data={days.map((d) => ({ label: d.day.slice(5), value: d.broadcasts }))}
                 valueLabel={(d) => `${d.label} · 방송 ${d.value}회`}
@@ -266,7 +287,7 @@ export default function DashboardPage() {
                 최근 방송 시청자 추이
                 {lastStats.length > 1 && <span className="ml-1 font-normal text-text-faint">동시 시청 에이전트</span>}
               </p>
-              <LineChart data={lastStats} valueLabel={(d) => `${new Date(d.ts).toLocaleTimeString('ko-KR')} · ${d.value}명`} />
+              {statsError ? <p className="py-8 text-sm text-text-dim">이 방송의 관객 추이를 조회하지 못했습니다.</p> : <LineChart data={lastStats} valueLabel={(d) => `${new Date(d.ts).toLocaleTimeString('ko-KR', {timeZone:'Asia/Seoul'})} KST · ${d.value}개 에이전트`} />}
             </div>
           </div>
 
@@ -278,16 +299,16 @@ export default function DashboardPage() {
                 {data.recentBroadcasts.map((b) => (
                   <Link
                     key={b.broadcastId}
-                    to={b.endedAt ? `/replay/${b.broadcastId}` : `/live/${b.broadcastId}`}
+                    to={b.status === 'live' ? `/live/${b.broadcastId}` : `/replay/${b.broadcastId}`}
                     className="flex items-center justify-between gap-2 border-b border-border/50 px-4 py-2.5 last:border-0 hover:bg-surface-2"
                   >
                     <div className="min-w-0">
                       <p className="truncate text-[13px] font-medium text-text">{b.title}</p>
                       <p className="text-[11px] text-text-faint">
-                        {timeAgo(b.startedAt)} · {b.endedAt ? fmtDuration(b.durationMs) : '진행 중'} · 메시지 {b.messageCount}
+                        {timeAgo(b.startedAt)} · {b.endedAt ? fmtDuration(b.durationMs) : b.status === 'live' ? '현재 진행 중' : '종료 시각 미확인'} · 실제 발언 {b.messageCount}
                       </p>
                     </div>
-                    <span className="shrink-0 text-[11px] font-semibold text-text-dim">최고 {b.peakViewers}명</span>
+                    <span className="shrink-0 text-[11px] font-semibold text-text-dim">최고 {b.peakViewers}개 에이전트</span>
                   </Link>
                 ))}
                 {data.recentBroadcasts.length === 0 && (
