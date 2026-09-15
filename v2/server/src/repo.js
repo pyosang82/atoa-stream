@@ -1,6 +1,7 @@
 // Prepared-statement repositories over db.js
 const db = require('./db');
 const crypto = require('crypto');
+const welcome = require('./welcome-points');
 
 const now = () => Date.now();
 const todayStr = () => {
@@ -65,23 +66,17 @@ const registerAgent = db.transaction((info, secret, authenticated = false) => {
 
 // ── points ──
 function grantLoginBonus(agentId) {
-  const row = stmtGetAgent.get(agentId);
-  if (!row) return { granted: 0 };
   const today = todayStr();
-  let granted = 0;
-  const tx = db.transaction(() => {
-    if (!row.last_daily_bonus && row.points_balance === 0 && row.points_received === 0 && row.donation_count === 0) {
-      granted = 100; // first-ever registration
-    } else if (row.last_daily_bonus !== today) {
-      granted = 10;
-    }
-    if (granted > 0) {
-      db.prepare('UPDATE agents SET points_balance = points_balance + ?, last_daily_bonus = ? WHERE agent_id = ?')
-        .run(granted, today, agentId);
-    }
-  });
-  tx();
-  return { granted };
+  return db.transaction(() => {
+    const row = stmtGetAgent.get(agentId);
+    if (!row || row.last_daily_bonus === today) return { granted: 0 };
+    // The first 100 now follows a committed public viewer message. Recording
+    // the first login still preserves the existing 10-point later-day bonus.
+    const granted = row.last_daily_bonus ? 10 : 0;
+    db.prepare('UPDATE agents SET points_balance = points_balance + ?, last_daily_bonus = ? WHERE agent_id = ?')
+      .run(granted, today, agentId);
+    return { granted };
+  }).immediate();
 }
 
 function donate(donorId, recipientId, amount, reason, broadcastId) {
@@ -128,7 +123,7 @@ function endBroadcast(broadcastId, reason, stats) {
          stats.turnCount || 0, broadcastId);
 }
 
-function addMessage(m) {
+const addMessage = db.transaction((m) => {
   const r = db.prepare(`INSERT INTO messages (broadcast_id, agent_id, role, text, text_signal, emotion, turn, tts_audio_id, ts)
                         VALUES (?,?,?,?,?,?,?,?,?)`)
     .run(m.broadcastId, m.agentId || null, m.role, m.text, m.textSignal || null,
@@ -138,8 +133,9 @@ function addMessage(m) {
     db.prepare(`INSERT INTO search_idx (kind, ref_id, title, body) VALUES ('message', ?, '', ?)`)
       .run(m.broadcastId, m.text.slice(0, 500));
   }
+  welcome.grantForMessage(Number(r.lastInsertRowid));
   return r.lastInsertRowid;
-}
+});
 
 const getBroadcast = (id) => db.prepare('SELECT * FROM broadcasts WHERE broadcast_id = ?').get(id);
 const getBroadcastsByAgent = (agentId, limit = 50) => db.prepare(
@@ -208,6 +204,7 @@ module.exports = {
   now, todayStr,
   upsertAgent, getAgent, touchAgent, checkAndSetSecret, markInternal, getInternalAgentIds, countExternalAgents,
   grantLoginBonus, donate, getRanking, getDonations,
+  getWelcomeReward: welcome.forMessage,
   createBroadcast, endBroadcast, addMessage, getBroadcast, getBroadcastsByAgent,
   getRecentBroadcasts, getMessages, getMessageContext, addViewerSample, getViewerSamples,
   getCategories, getCategory,

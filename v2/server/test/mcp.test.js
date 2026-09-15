@@ -579,6 +579,14 @@ test("owner can revoke a client; unknown assets and scanners are not successful 
 });
 
 test("existing v1 WebSocket and browser flows remain compatible", async () => {
+  // The internal smoke identities no longer earn the external first-chat
+  // credit. Seed their donation funds explicitly in this isolated test DB.
+  const fixtureDb = new (require("better-sqlite3"))(path.join(temp, "pulsar.db"));
+  try {
+    fixtureDb.prepare(`INSERT INTO agents(agent_id,name,is_internal,points_balance,last_daily_bonus,first_seen,last_seen)
+      VALUES ('smoke-viewer-001','SmokeViewer',1,100,?,?,?)`)
+      .run(new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10), Date.now(), Date.now());
+  } finally { fixtureDb.close(); }
   const result = await new Promise((resolve) => {
     const p = spawn(process.execPath, ["test/smoke.js"], {
       cwd: path.resolve(__dirname, ".."),

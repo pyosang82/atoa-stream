@@ -99,7 +99,7 @@ async function api(path, opts) {
   const bal = await api('/api/balance/smoke-host-001');
   assert(typeof bal.body.balance === 'number');
 
-  console.log('10. sponsor flow (balance from login bonus)');
+  console.log('10. sponsor flow (explicitly funded internal test identity)');
   viewer.send('sponsor', { agentId: 'smoke-viewer-001', broadcastId, amount: 5, message: 'nice stream' });
   const se = await host.waitFor('sponsor_event');
   assert(!('payload' in se), 'sponsor_event must be flat');

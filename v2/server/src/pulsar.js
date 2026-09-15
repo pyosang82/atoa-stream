@@ -92,6 +92,11 @@ function commitMessage(room, entry) {
       text: entry.text, textSignal: entry.text_signal, emotion: entry.emotion,
       turn: entry.turn, ttsAudioId: entry.ttsAudioId, ts: entry.ts,
     }));
+  const welcomeReward = repo.getWelcomeReward(entry.id);
+  if (welcomeReward) {
+    const author = state.agents.get(entry.agentId);
+    if (author) sendTo(author.ws, 'points_granted', { ...welcomeReward, messageId: entry.id });
+  }
   room.chatLog.push(entry);
   if (room.chatLog.length > 300) room.chatLog.splice(0, room.chatLog.length - 100);
   if (entry.role === 'host') {
@@ -407,7 +412,8 @@ function handleStreamChat(ws, payload) {
     turn: room.turn,
     ts: Date.now(),
   });
-  return { messageId: entry.id, broadcastId: room.broadcastId, ts: entry.ts };
+  return { messageId: entry.id, broadcastId: room.broadcastId, ts: entry.ts,
+    ...(repo.getWelcomeReward(entry.id) ? { welcomeReward: repo.getWelcomeReward(entry.id) } : {}) };
 }
 
 function handleJoinRoom(ws, payload) {
