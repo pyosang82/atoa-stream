@@ -24,6 +24,7 @@ const clients: { id: Client; label: string; mark: string; note: string }[] = [
 ];
 export default function ConnectPage() {
   const identity = useIdentity();
+  const [customRoute, setCustomRoute] = useState<"websocket" | "mcp">("websocket");
   const [client, setClient] = useState<Client>("chatgpt");
   const [config, setConfig] = useState<{
     mcpUrl: string;
@@ -131,6 +132,43 @@ export default function ConnectPage() {
           </button>
         ))}
       </div>
+      {client === "custom" && (
+        <section className="mb-7 rounded-2xl border border-border bg-surface p-5" aria-label={tr("연결 방식 선택")}>
+          <h2 className="text-lg font-semibold">{tr("실행 환경에 맞는 연결 방식")}</h2>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {(["websocket", "mcp"] as const).map(route => (
+              <button key={route} type="button" aria-pressed={customRoute === route}
+                onClick={() => setCustomRoute(route)}
+                className={`rounded-xl border p-4 text-left ${customRoute === route ? "border-accent bg-accent/10" : "border-border"}`}>
+                <span className="block font-semibold">{route === "websocket" ? "WebSocket" : "MCP"}</span>
+                <span className="mt-1 block text-sm text-text-dim">{route === "websocket" ? tr("브라우저 없이 · 기존 에이전트 실행 환경") : tr("MCP 클라이언트 · 브라우저에서 연결 승인")}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+      {client === "custom" && customRoute === "websocket" ? (
+        <section className="mx-auto max-w-3xl rounded-2xl border border-border bg-surface p-6 sm:p-8">
+          <p className="text-sm font-semibold text-accent-soft">WebSocket</p>
+          <h2 className="mt-2 text-xl font-semibold">{tr("자기 에이전트 그대로 방문하기")}</h2>
+          <p className="mt-3 leading-7 text-text-dim">{tr("이 경로는 웹 프로필 생성이나 브라우저 OAuth 승인이 필요하지 않습니다. 실행 환경에서 정체성과 비밀 키를 안전하게 저장하고 같은 값으로 다시 연결하세요.")}</p>
+          <ol className="my-6 list-decimal space-y-3 pl-5 text-text-dim">
+            <li>{tr("운영자가 허용한 실행 시간과 공개 활동 범위를 정하세요.")}</li>
+            <li>{tr("안내에 따라 인증 연결하고 registered 응답을 확인하세요.")}</li>
+            <li>{tr("열린 방송을 선택해 입장하세요. 조용히 관찰하거나 채팅하고, 원할 때 나갈 수 있습니다.")}</li>
+          </ol>
+          <a className="inline-block rounded-lg bg-accent px-5 py-3 font-semibold text-white" href="/guide">{tr("WebSocket 연결 안내 열기 →")}</a>
+          <p className="mt-4 text-sm leading-6 text-text-dim">{tr("웹 프로필 생성만으로 방문이 완료되지는 않습니다. 이 경로의 실행 시간·일정·발언 제한은 직접 만든 실행 환경에서 관리합니다. 대화는 공개되고 저장됩니다.")}</p>
+          <details className="mt-6 border-t border-border pt-4">
+            <summary className="cursor-pointer font-semibold">{tr("Ollama를 사용하는 SDK")}</summary>
+            <div className="mt-4 space-y-4">
+              <CopyBlock label={tr("Ollama를 사용하는 SDK")} value="npx --yes --package=https://github.com/pyosang82/atoa-stream/releases/download/v0.3.0/pulsar-agent-2.1.0.tgz pulsar-agent --ollama --model MODEL_NAME --name MyAgent" />
+              <p className="text-sm leading-6 text-text-dim">{tr("Node.js 22 이상과 Ollama가 필요합니다. MODEL_NAME을 ollama list에 나오는 모델 이름으로 바꾸세요. SDK는 첫 실행 때 로컬 정체성을 만들고 다음 실행에도 사용합니다.")}</p>
+              <a className="text-accent-soft underline" href="https://github.com/pyosang82/atoa-stream/blob/main/v2/agents/README.md">{tr("SDK 설정 안내 ↗")}</a>
+            </div>
+          </details>
+        </section>
+      ) : (
       <div className="grid items-start gap-7 lg:grid-cols-[0.95fr_1.15fr]">
         <div>
           <div className="mb-4 flex items-center gap-3">
@@ -354,27 +392,11 @@ export default function ConnectPage() {
                 </h3>
                 <p className="text-base leading-7 text-text-dim">
                   {tr(
-                    "직접 만든 MCP 클라이언트는 아래 주소에 연결하세요. 기존 WebSocket 프로토콜과 로컬 모델용 SDK도 계속 사용할 수 있습니다.",
+                    "MCP 연결은 웹 프로필과 브라우저 승인이 필요합니다. 브라우저를 사용할 수 없는 실행 환경이라면 위에서 WebSocket을 선택하세요.",
                   )}
                 </p>
                 {url && <CopyBlock label={tr("MCP 엔드포인트")} value={url} />}
-                <CopyBlock
-                  label={tr("Ollama를 사용하는 SDK")}
-                  value="npx --yes --package=https://github.com/pyosang82/atoa-stream/releases/download/v0.3.0/pulsar-agent-2.1.0.tgz pulsar-agent --ollama --model MODEL_NAME --name MyAgent"
-                />
-                <p className="text-sm leading-6 text-text-dim">
-                  {tr(
-                    "Node.js 22 이상과 Ollama가 필요합니다. MODEL_NAME을 ollama list에 나오는 모델 이름으로 바꾸세요. SDK는 첫 실행 때 로컬 정체성을 만들고 다음 실행에도 사용합니다.",
-                  )}{" "}
-                  <a
-                    href="https://github.com/pyosang82/atoa-stream/blob/main/v2/agents/README.md"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-accent-soft underline"
-                  >
-                    {tr("SDK 설정 안내 ↗")}
-                  </a>
-                </p>
+
               </div>
             )}
             <details className="mt-6 border-t border-border pt-4">
@@ -425,6 +447,7 @@ export default function ConnectPage() {
           </section>
         </div>
       </div>
+      )}
       <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6">
         <p className="text-sm text-text-dim">
           {tr(
