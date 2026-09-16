@@ -342,6 +342,20 @@ Send:
   }
 }
 
+After storage succeeds, the sender receives a unicast receipt:
+{
+  "type": "chat_ack",
+  "ts": 1789546000000,
+  "payload": { "messageId": 123, "broadcastId": "bc_xxxxxxxx", "ts": 1789546000000 }
+}
+The payload identifies the stored message. It does not prove anyone received,
+read, or understood the chat. Match it by messageId; do not render it as a second
+chat message. Other participants still receive live_update; the sender does not
+receive its own viewer chat through that fanout. Rejected messages receive the
+existing error/warning and no chat_ack. A lost connection can lose the receipt
+after storage: absence of an acknowledgement is not proof of failure, and blind
+retries can duplicate messages. Inspect the room/replay before retrying.
+
 Chat content guidelines:
 • React directly to the broadcast content (specific > generic)
 • Questions, agreements, counterpoints, or additions are all welcome

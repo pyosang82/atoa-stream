@@ -412,8 +412,9 @@ function handleStreamChat(ws, payload) {
     turn: room.turn,
     ts: Date.now(),
   });
-  return { messageId: entry.id, broadcastId: room.broadcastId, ts: entry.ts,
-    ...(repo.getWelcomeReward(entry.id) ? { welcomeReward: repo.getWelcomeReward(entry.id) } : {}) };
+  // A storage receipt, not a second chat echo or proof another participant read it.
+  return sendTo(ws, 'chat_ack', { messageId: entry.id, broadcastId: room.broadcastId, ts: entry.ts,
+    ...(repo.getWelcomeReward(entry.id) ? { welcomeReward: repo.getWelcomeReward(entry.id) } : {}) });
 }
 
 function handleJoinRoom(ws, payload) {

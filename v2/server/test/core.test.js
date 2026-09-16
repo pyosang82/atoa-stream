@@ -204,3 +204,56 @@ test('default agent transmits voluntary leave and ignores subsequent context', a
   assert.ok(!a.watching.has('bc_1234'));
   assert.equal(a.timers.size, 0);
 });
+
+
+test('viewer storage acknowledgement matches DB, preserves fanout and is not a chat echo', () => {
+  const host = register('receipt-host');
+  const viewer = register('receipt-viewer', { secret: 'receipt-secret', participationMode: 'explicit' });
+  const peer = register('receipt-peer', { participationMode: 'explicit' });
+  const { broadcastId } = send(host, 'broadcast_start', { title: 'Receipt room' });
+  for (const ws of [viewer, peer]) send(ws, 'join_room', { broadcastId });
+  const result = send(viewer, 'stream_chat', { broadcastId, text: 'An acknowledged thought.' });
+  const receipts = viewer.messages.filter(m => m.type === 'chat_ack');
+  assert.equal(receipts.length, 1);
+  assert.deepEqual(receipts[0].payload, result);
+  const stored = db.prepare('SELECT * FROM messages WHERE id=?').get(result.messageId);
+  assert.equal(stored.agent_id, 'receipt-viewer');
+  assert.equal(stored.broadcast_id, broadcastId);
+  assert.equal(stored.ts, result.ts);
+  for (const ws of [host, peer]) {
+    assert.equal(ws.messages.filter(m => m.type === 'chat_ack').length, 0);
+    assert.ok(ws.messages.some(m => m.type === 'live_update' && m.messages?.some(x => x.id === result.messageId)));
+  }
+  assert.ok(!viewer.messages.some(m => m.type === 'live_update' && m.messages?.some(x => x.id === result.messageId)));
+});
+
+test('rejected, throttled and failed-storage chats never acknowledge success', t => {
+  const host = register('receipt-errors-host');
+  const viewer = register('receipt-errors-viewer', { participationMode: 'explicit' });
+  const { broadcastId } = send(host, 'broadcast_start', { title: 'Receipt errors' });
+  const count = () => viewer.messages.filter(m => m.type === 'chat_ack').length;
+  const rejected = (payload, code) => {
+    const before = count();
+    send(viewer, 'stream_chat', payload);
+    assert.equal(viewer.messages.at(-1).payload.code, code);
+    assert.equal(count(), before);
+  };
+  rejected({ broadcastId, text: 'Before join' }, 'JOIN_REQUIRED');
+  send(viewer, 'join_room', { broadcastId });
+  rejected({ broadcastId, text: '   ' }, 'EMPTY_MESSAGE');
+  rejected({ broadcastId: 'bc_absent', text: 'Wrong room' }, 'ROOM_NOT_FOUND');
+  send(viewer, 'stream_chat', { broadcastId, text: 'Unique first' });
+  rejected({ broadcastId, text: 'Unique first' }, 'DUPLICATE_MESSAGE');
+  const base = Date.now();
+  t.mock.method(Date, 'now', () => base + 2000);
+  for (let i = 0; i < 10; i++) send(viewer, 'stream_chat', { broadcastId, text: 'Rate sample ' + i });
+  rejected({ broadcastId, text: 'Over rate' }, 'RATE_LIMIT_EXCEEDED');
+  t.mock.method(Date, 'now', () => base + 4000);
+  const beforeRows = db.prepare('SELECT COUNT(*) n FROM messages').get().n;
+  const add = t.mock.method(repo, 'addMessage', () => { throw new Error('simulated storage failure'); });
+  rejected({ broadcastId, text: 'Must not acknowledge failed storage' }, 'INTERNAL');
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM messages').get().n, beforeRows);
+  add.mock.restore();
+  send(host, 'broadcast_end', { broadcastId });
+  rejected({ broadcastId, text: 'After end' }, 'ROOM_NOT_FOUND');
+});
