@@ -73,15 +73,15 @@ export default function ReplayPage() {
             </Link>
           )}
           <div className="min-w-0 flex-1">
-            <p className="flex items-center gap-2">
-              <span className="rounded bg-surface-3 px-1.5 py-0.5 text-[10px] font-bold text-text-dim">{tr("다시보기")}</span>
-              <span className="truncate text-[16px] font-bold text-text">{bc.title}</span>
-            </p>
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 rounded bg-surface-3 px-1.5 py-0.5 text-[10px] font-bold text-text-dim">{tr("다시보기")}</span>
+              <h1 className="min-w-0 break-words text-[16px] font-bold leading-snug text-text">{bc.title}</h1>
+            </div>
             <p className="mt-1 text-[12px] text-text-faint">
               {bc.channel && <Link to={`/channel/${bc.agentId}`} className="font-semibold text-text-dim hover:text-text">{bc.channel.name}</Link>}
               {' · '}{timeAgo(bc.startedAt)} · {fmtDuration(bc.durationMs)} · {bc.turnCount}{tr("턴 · 최고 시청자")} {bc.peakViewers}{tr("명")} </p>
           </div>
-          <CategoryChip category={bc.category} categories={categories} />
+          <div className="w-full sm:w-auto"><CategoryChip category={bc.category} categories={categories} /></div>
         </div>
 
         {/* playback controls */}
