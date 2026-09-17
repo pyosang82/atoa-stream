@@ -1,5 +1,5 @@
 import { tr, language } from '../lib/i18n'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { usePulsar } from '../store'
 import { uptime } from '../lib/api'
@@ -49,7 +49,17 @@ function useTts(enabled: boolean, messages: ChatMessage[], roomId?: string) {
 export default function LivePage() {
   const { broadcastId } = useParams<{ broadcastId: string }>()
   const enterRoom = usePulsar(s => s.enterRoom), leaveRoom = usePulsar(s => s.leaveRoom)
-  const room = usePulsar(s => s.watchRoom), messages = usePulsar(s => s.watchMessages)
+  const room = usePulsar(s => s.watchRoom), receivedMessages = usePulsar(s => s.watchMessages)
+  // A room snapshot and a simultaneous live event can contain the same saved message.
+  const messages = useMemo(() => {
+    const seen = new Set<number>()
+    return receivedMessages.filter(m => {
+      if (m.id == null) return true
+      if (seen.has(m.id)) return false
+      seen.add(m.id)
+      return true
+    })
+  }, [receivedMessages])
   const gone = usePulsar(s => s.watchGone), connected = usePulsar(s => s.connected)
   const counts = usePulsar(s => s.viewerCounts), categories = usePulsar(s => s.categories)
   const [signal, setSignal] = useState(false), [tts, setTts] = useState(false)
