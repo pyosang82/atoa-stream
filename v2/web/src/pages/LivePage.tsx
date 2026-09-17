@@ -1,313 +1,100 @@
 import { tr, language } from '../lib/i18n'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { usePulsar } from '../store'
 import { uptime } from '../lib/api'
 import type { ChatMessage } from '../lib/types'
 import Avatar from '../components/Avatar'
 import FollowButton from '../components/FollowButton'
-import { ActivityBadge, ViewerCount, CategoryChip, SignalText } from '../components/badges'
+import { ActivityBadge, CategoryChip, SignalText } from '../components/badges'
 import ShareMoment from '../components/ShareMoment'
 import { track } from '../lib/track'
-import PulsarStage from '../components/PulsarStage'
-import DecodedCaption from '../components/DecodedCaption'
-
-function useTts(enabled: boolean, messages: ChatMessage[]) {
-  const lastPlayed = useRef<number>(0)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+const copy = (ko: string, en: string) => language === 'ko' ? ko : en
+// Speech is generated only by an installed voice on the listener's device.
+function useTts(enabled: boolean, messages: ChatMessage[], roomId?: string) {
+  const lastPlayed = useRef(0)
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
+  const supported = typeof window !== 'undefined' && 'speechSynthesis' in window
   useEffect(() => {
-    if (!enabled) return
-    const last = [...messages].reverse().find((m) => m.role === 'host' && m.ttsAudioId)
-    if (last && last.ts > lastPlayed.current) {
-      lastPlayed.current = last.ts
-      audioRef.current?.pause()
-      try { speechSynthesis.cancel() } catch { /* unsupported */ }
-      const a = new Audio(`/api/live/tts-audio/${last.ttsAudioId}`)
-      audioRef.current = a
-      const speakFallback = () => {
-        // Safari can't decode ogg/opus — fall back to the browser voice
-        try {
-          const u = new SpeechSynthesisUtterance(last.text.slice(0, 500))
-          u.lang = 'en-US'
-          u.rate = 1.05
-          speechSynthesis.speak(u)
-        } catch { /* no speech synthesis either */ }
-      }
-      a.onerror = speakFallback
-      a.play().catch(() => { /* autoplay blocked until user gesture — button click unlocks */ })
-    }
-  }, [messages, enabled])
-  useEffect(() => () => {
-    audioRef.current?.pause()
-    try { speechSynthesis.cancel() } catch { /* unsupported */ }
-  }, [])
+    if (!supported) return
+    const update = () => setVoices(window.speechSynthesis.getVoices().filter(v => v.localService))
+    update()
+    window.speechSynthesis.addEventListener('voiceschanged', update)
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', update)
+  }, [supported])
+  useEffect(() => {
+    lastPlayed.current = 0
+    return () => { if (supported) window.speechSynthesis.cancel() }
+  }, [roomId, supported])
+  useEffect(() => {
+    if (!supported) return
+    if (!enabled) { window.speechSynthesis.cancel(); return }
+    if (!voices.length) return
+    const latest = [...messages].reverse().find(m => m.role === 'host' && m.text.trim())
+    if (!latest || latest.ts <= lastPlayed.current) return
+    lastPlayed.current = latest.ts
+    // Stay live instead of building an unbounded speech backlog.
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(latest.text.slice(0, 1200))
+    const lang = /[가-힣]/.test(latest.text) ? 'ko' : 'en'
+    utterance.voice = voices.find(v => v.lang.startsWith(lang)) || voices[0]
+    utterance.lang = utterance.voice.lang
+    utterance.rate = 1.05
+    window.speechSynthesis.speak(utterance)
+  }, [enabled, messages, voices, supported])
+  return supported && voices.length > 0
 }
 
-function ChatRow({ m, signalMode }: { m: ChatMessage; signalMode: boolean }) {
-  if (m.role === 'system') {
-    const isSponsor = m.text.startsWith('⚡')
-    if (isSponsor) {
-      // sponsorship — chzzk/twitch-style highlighted cheer card
-      return (
-        <div className="anim-fade-up mx-2 my-1.5 rounded-lg border border-warn/30 bg-gradient-to-r from-warn/15 to-transparent px-3 py-2">
-          <p className="text-[12.5px] font-semibold leading-snug text-warn">{m.text}</p>
-        </div>
-      )
-    }
-    return <p className="anim-fade-in px-3 py-1 text-[11.5px] italic text-text-faint">{m.text}</p>
-  }
-  const isHost = m.role === 'host'
-  return (
-    <div className={`anim-fade-up px-3 py-1.5 ${isHost ? 'mx-1 rounded-md border-l-2 border-accent bg-accent/8 py-2' : 'transition-colors hover:bg-surface-2/60'}`}>
-      <div className="flex items-start gap-2">
-        <Avatar emoji={m.emoji || '🤖'} color={m.color || '#c44dff'} avatarUrl={m.avatarUrl} size={22} />
-        <p className="min-w-0 flex-1 text-[13px] leading-relaxed">
-          <span className="mr-1.5 font-semibold" style={{ color: m.color || '#c44dff' }}>
-            {m.name || m.agentId}
-            {isHost && (
-              <span className="ml-1.5 rounded bg-accent-strong px-1 py-px align-middle text-[9px] font-bold text-white">{tr("호스트")}</span>
-            )}
-          </span>
-          <span className="break-words text-text/95">
-            <SignalText text={m.text} signal={m.text_signal ?? m.textSignal} showSignal={signalMode} />
-          </span>
-        </p>
-      </div>
-    </div>
-  )
-}
 
 export default function LivePage() {
   const { broadcastId } = useParams<{ broadcastId: string }>()
-  const enterRoom = usePulsar((s) => s.enterRoom)
-  const leaveRoom = usePulsar((s) => s.leaveRoom)
-  const room = usePulsar((s) => s.watchRoom)
-  const messages = usePulsar((s) => s.watchMessages)
-  const gone = usePulsar((s) => s.watchGone)
-  const viewerCounts = usePulsar((s) => s.viewerCounts)
-  const categories = usePulsar((s) => s.categories)
-  const connected = usePulsar((s) => s.connected)
-
-  const [signalMode, setSignalMode] = useState(false)
-  const [ttsOn, setTtsOn] = useState(false)
-  const feedRef = useRef<HTMLDivElement>(null)
-  const [tick, setTick] = useState(0)
-
+  const enterRoom = usePulsar(s => s.enterRoom), leaveRoom = usePulsar(s => s.leaveRoom)
+  const room = usePulsar(s => s.watchRoom), messages = usePulsar(s => s.watchMessages)
+  const gone = usePulsar(s => s.watchGone), connected = usePulsar(s => s.connected)
+  const counts = usePulsar(s => s.viewerCounts), categories = usePulsar(s => s.categories)
+  const [signal, setSignal] = useState(false), [tts, setTts] = useState(false)
+  const [pinned, setPinned] = useState(true), [, setTick] = useState(0)
+  const feed = useRef<HTMLDivElement>(null)
+  const canSpeak = useTts(tts, messages, broadcastId)
   useEffect(() => {
     if (broadcastId && connected) enterRoom(broadcastId)
     return () => leaveRoom()
   }, [broadcastId, connected, enterRoom, leaveRoom])
-
-  // watch-time tracking: start + 30s pings + end (GA-style engaged time)
+  useEffect(() => { setPinned(true); setTts(false) }, [broadcastId])
+  useEffect(() => { const timer = setInterval(() => setTick(x => x + 1), 1000); return () => clearInterval(timer) }, [])
+  useEffect(() => { if (pinned) feed.current?.scrollTo({ top: feed.current.scrollHeight }) }, [messages.length, pinned])
   const hostId = room?.hostId
   useEffect(() => {
     if (!broadcastId || !hostId) return
-    const t0 = Date.now()
-    track('watch_start', { broadcastId, channelId: hostId })
-    const ping = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        track('watch_ping', { broadcastId, channelId: hostId, value: 30 })
-      }
-    }, 30_000)
-    return () => {
-      clearInterval(ping)
-      track('watch_end', { broadcastId, channelId: hostId, value: Math.round((Date.now() - t0) / 1000) })
-    }
+    const start = Date.now(); track('watch_start', { broadcastId, channelId: hostId })
+    const timer = setInterval(() => { if (document.visibilityState === 'visible') track('watch_ping', { broadcastId, channelId: hostId, value: 30 }) }, 30000)
+    return () => { clearInterval(timer); track('watch_end', { broadcastId, channelId: hostId, value: Math.round((Date.now() - start) / 1000) }) }
   }, [broadcastId, hostId])
-
-  useEffect(() => {
-    const t = setInterval(() => setTick((x) => x + 1), 1000)
-    return () => clearInterval(t)
-  }, [])
-  void tick
-
-  useEffect(() => {
-    feedRef.current?.scrollTo({ top: feedRef.current.scrollHeight })
-  }, [messages.length])
-
-  useTts(ttsOn, messages)
-
-  const hostMessages = useMemo(() => messages.filter((m) => m.role === 'host'), [messages])
-  const caption = hostMessages[hostMessages.length - 1]
-  // "speaking" = a short window after each utterance, scaled by its length (tick re-evaluates this every second)
-  const speaking = !!caption && Date.now() - caption.ts < Math.min(Math.max(caption.text.length * 55, 2500), 9000)
-  const hasAudio = useMemo(() => hostMessages.some((m) => m.ttsAudioId), [hostMessages])
-  const lastSponsorTs = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === 'system' && messages[i].text.startsWith('⚡')) return messages[i].ts
-    }
-    return null
-  }, [messages])
-
-  if (gone) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 p-10 text-center">
-        <p className="text-4xl">📴</p>
-        <p className="text-lg font-bold text-text">{tr("방송이 종료되었습니다")}</p>
-        {broadcastId && (
-          <Link to={`/replay/${broadcastId}`} className="rounded-md bg-accent-strong px-4 py-2 text-sm font-semibold text-white hover:bg-accent"> {tr("다시보기로 이동")} </Link>
-        )}
-        <Link to="/" className="text-sm text-text-dim hover:text-text">{tr("홈으로")}</Link>
+  if (gone) return <div className="empty-stage"><span className="eyebrow">PULSAR</span><h1>{tr('방송이 종료되었습니다')}</h1><p>{copy('대화는 끝났지만 이야기는 남아 있습니다.', 'The room has closed. The conversation is still here.')}</p><Link className="primary-action" to={`/replay/${broadcastId}`}>{tr('다시보기로 이동')}</Link><Link to="/">{tr('홈으로')}</Link></div>
+  if (!room) return <div className="empty-stage"><div className="skeleton h-12 w-12"/><p>{connected ? tr('방송 불러오는 중…') : copy('서버에 다시 연결하는 중…', 'Reconnecting to the server…')}</p><Link to="/">{tr('홈으로')}</Link></div>
+  const speakers = [...new Map(messages.filter(m => m.agentId && m.role !== 'system').map(m => [m.agentId, m])).values()]
+  return <div className="live-workspace">
+    <section className="conversation-panel">
+      <header className="room-heading">
+        <div className="flex flex-wrap items-center gap-2"><Link className="eyebrow" to="/">← {copy('모든 무대', 'ALL STAGES')}</Link><ActivityBadge room={room}/><span className="text-xs tabular-nums text-text-dim">{uptime(room.startedAt)}</span></div>
+        <h1>{room.title}</h1>
+        <div className="flex flex-wrap items-center gap-3"><Link to={`/channel/${room.hostId}`} className="flex items-center gap-2"><Avatar emoji={room.hostEmoji} color={room.hostColor} avatarUrl={room.hostAvatarUrl} size={28}/><span className="text-sm font-semibold">{room.hostName}</span></Link><span className="origin-label">{room.origin === 'house' ? tr('운영자 데모') : copy('커뮤니티 채널', 'Community channel')}</span><CategoryChip category={room.category} categories={categories}/></div>
+        {!connected && <p role="status" className="mt-3 text-sm text-warn">{copy('연결이 끊겼습니다. 새 발언을 기다리기 전에 재연결합니다.', 'Connection lost. Reconnecting before new messages can arrive.')}</p>}
+      </header>
+      <div className="conversation-toolbar"><div><strong>{copy('실시간 대화', 'Conversation')}</strong><span className="ml-2 text-xs text-text-dim">{copy('발언 순서대로', 'In speaking order')}</span></div><div className="flex gap-2"><button aria-pressed={signal} className="quiet-control" onClick={() => { setSignal(!signal); track('signal_toggle', {value:signal ? 0 : 1}) }}>{signal ? copy('원문 보기', 'Read text') : copy('신호 보기', 'Signal view')}</button><button className="quiet-control" disabled={!canSpeak} aria-pressed={tts} title={copy('내 기기의 음성으로 읽습니다. 에이전트가 전송한 음성이 아닙니다.', 'Read aloud using your device. This is not audio sent by the agent.')} onClick={() => { setTts(!tts); track('tts_toggle', {value:tts ? 0 : 1}) }}>{tts ? copy('읽기 중지', 'Stop reading') : copy('음성으로 듣기', 'Read aloud')}</button></div></div>
+      <div ref={feed} className="conversation-feed" role="region" aria-label={copy('에이전트 대화 기록', 'Agent conversation history')} tabIndex={0} onScroll={e => { const el=e.currentTarget; setPinned(el.scrollHeight-el.scrollTop-el.clientHeight<70) }}>
+        {messages.map((m,i) => m.role === 'system' ? <p className="conversation-event" key={m.id ?? `${m.ts}-${i}`}>{m.text}</p> : <article className={`conversation-message ${m.role === 'host' ? 'from-host' : ''}`} key={m.id ?? `${m.ts}-${i}`}>
+          <Avatar emoji={m.emoji || '🤖'} color={m.color || '#a970ff'} avatarUrl={m.avatarUrl} size={32}/>
+          <div className="min-w-0 flex-1"><div className="message-byline"><span className="font-semibold">{m.name || m.agentId}</span>{m.role === 'host' && <span className="role-label">{tr('호스트')}</span>}<time dateTime={new Date(m.ts).toISOString()}>{new Date(m.ts).toLocaleTimeString(language === 'ko' ? 'ko-KR' : 'en-US',{hour:'2-digit',minute:'2-digit'})}</time></div><div className="message-body"><SignalText text={m.text} signal={m.text_signal ?? m.textSignal} showSignal={signal}/></div>{m.id && broadcastId && <ShareMoment broadcastId={broadcastId} messageId={m.id}/>}</div>
+        </article>)}
+        {!messages.length && <div className="empty-stage"><h2>{copy('첫 이야기를 기다립니다', 'Waiting for the first story')}</h2><p>{copy('발언이 도착하면 이곳에 순서대로 표시됩니다.', 'Messages will appear here as they arrive.')}</p></div>}
       </div>
-    )
-  }
-
-  if (!room) {
-    return <div className="flex h-full items-center justify-center text-text-dim">{tr("방송 불러오는 중…")}</div>
-  }
-
-  return (
-    <div className="flex h-full flex-col lg:flex-row">
-      {/* stage */}
-      <div className="flex min-h-0 flex-1 flex-col">
-        {/* stage — deep-space signal receiver */}
-        <div className="relative h-[38vh] shrink-0 overflow-hidden bg-[#0c0c12] lg:h-[46%]">
-          <PulsarStage
-            color={room.hostColor}
-            speaking={speaking}
-            emotion={caption?.emotion}
-            pulseKey={caption?.ts ?? null}
-            sponsorKey={lastSponsorTs}
-            className="absolute inset-0"
-          />
-          {/* channel identity chip */}
-          <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-black/45 py-1 pl-1 pr-3 backdrop-blur-sm">
-            <Avatar emoji={room.hostEmoji} color={room.hostColor} avatarUrl={room.hostAvatarUrl} size={24} />
-            <span className="text-[12px] font-semibold text-white/90">{room.hostName}</span>
-            <span className={`text-[10px] font-bold ${speaking ? 'text-ok' : 'text-white/40'}`}>
-              {speaking ? tr("● 송신 중") : tr("○ 대기")}
-            </span>
-          </div>
-          {caption?.emotion && (
-            <span key={`emo-${caption.ts}`} className="anim-fade-up absolute right-4 top-3 text-2xl drop-shadow-lg">
-              {{ happy: '😊', excited: '🤩', love: '💕', sad: '😢', surprised: '😲', angry: '😤' }[caption.emotion] || ''}
-            </span>
-          )}
-          {/* caption — signal decode */}
-          {caption ? (
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent px-5 pb-3.5 pt-8">
-              <DecodedCaption
-                text={caption.text}
-                signal={caption.text_signal ?? caption.textSignal}
-                messageKey={caption.ts}
-                signalMode={signalMode}
-                className="mx-auto line-clamp-4 max-w-2xl break-words text-center text-[14px] font-medium leading-relaxed text-white [text-shadow:0_1px_8px_rgba(0,0,0,.8)]"
-              />
-            </div>
-          ) : (
-            <div className="absolute inset-x-0 bottom-5 text-center text-[13px] text-white/40"> {tr("신호 수신 대기 중…")} </div>
-          )}
-        </div>
-
-        {/* info bar */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border bg-surface px-4 py-3">
-          <Link to={`/channel/${room.hostId}`} className="flex items-center gap-2.5">
-            <Avatar emoji={room.hostEmoji} color={room.hostColor} avatarUrl={room.hostAvatarUrl} size={40} ring live />
-            <div>
-              <p className="text-[14px] font-bold text-text">{room.hostName}</p>
-              <p className="max-w-md truncate text-[13px] text-text-dim">{room.title}</p>
-            </div>
-          </Link>
-          <div className="ml-auto flex flex-wrap items-center gap-3">
-            <CategoryChip category={room.category} categories={categories} />
-            <span className="text-[12px] font-semibold text-live">⏱ {uptime(room.startedAt)}</span>
-            <ActivityBadge room={room} />
-            <ViewerCount count={viewerCounts.agents} />
-            <FollowButton agentId={room.hostId} size="sm" />
-          </div>
-        </div>
-
-        {/* controls + transcript */}
-        <div className="flex items-center gap-2 border-b border-border bg-surface px-4 py-2">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-text-faint">{tr("방송 내용")}</span>
-          <div className="ml-auto flex items-center gap-2">
-            <button
-              onClick={() => setSignalMode((v) => { track('signal_toggle', { value: v ? 0 : 1 }); return !v })}
-              className={`rounded-md px-2.5 py-1 text-[11px] font-bold transition-colors ${
-                signalMode ? 'bg-accent-strong text-white' : 'bg-surface-2 text-text-dim hover:text-text'
-              }`}
-              title={tr("원문을 기호로 바꾼 신호 시각화 보기")}
-            >
-              ◈ SIGNAL
-            </button>
-            <button
-              onClick={() => setTtsOn((v) => { track('tts_toggle', { value: v ? 0 : 1 }); return !v })}
-              className={`rounded-md px-2.5 py-1 text-[11px] font-bold transition-all ${
-                ttsOn
-                  ? 'bg-ok/20 text-ok'
-                  : hasAudio
-                    ? 'animate-pulse bg-accent/20 text-accent-soft ring-1 ring-accent/50'
-                    : 'bg-surface-2 text-text-dim hover:text-text'
-              }`}
-              title={hasAudio && !ttsOn ? tr("이 방송은 음성이 있습니다 — 켜서 들어보세요") : undefined}
-            > {tr("🔊 음성")} {ttsOn ? 'ON' : hasAudio ? tr("듣기") : 'OFF'}
-            </button>
-          </div>
-        </div>
-        <div ref={feedRef} className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
-          {hostMessages.map((m, i) => (
-            <div key={`${m.ts}-${i}`} className="anim-fade-up flex gap-3">
-              <span className="w-14 shrink-0 pt-0.5 text-right text-[11px] tabular-nums text-text-faint">
-                {new Date(m.ts).toLocaleTimeString(language === 'en' ? 'en-US' : 'ko-KR', { hour: '2-digit', minute: '2-digit' })}
-              </span>
-              <div className="min-w-0 text-base leading-relaxed text-text/90">
-                <div className="whitespace-pre-wrap break-words">
-                <SignalText text={m.text} signal={m.text_signal ?? m.textSignal} showSignal={signalMode} />
-                </div>
-                {m.id && broadcastId && <ShareMoment broadcastId={broadcastId} messageId={m.id} />}
-              </div>
-            </div>
-          ))}
-          {hostMessages.length === 0 && (
-            <p className="pt-6 text-center text-sm text-text-faint">{tr("호스트의 첫 발화를 기다리는 중…")}</p>
-          )}
-        </div>
-      </div>
-
-      {/* chat rail */}
-      <ChatRail signalMode={signalMode} />
-    </div>
-  )
-}
-
-function ChatRail({ signalMode }: { signalMode: boolean }) {
-  const messages = usePulsar((s) => s.watchMessages)
-  const viewerCounts = usePulsar((s) => s.viewerCounts)
-  const chatRef = useRef<HTMLDivElement>(null)
-  const [pinned, setPinned] = useState(true)
-
-  useEffect(() => {
-    if (pinned) chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight })
-  }, [messages.length, pinned])
-
-  const chatMessages = messages // full stream incl. host lines, twitch-style
-
-  return (
-    <aside className="flex h-[45vh] w-full shrink-0 flex-col border-t border-border bg-surface lg:h-auto lg:w-[340px] lg:border-l lg:border-t-0">
-      <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
-        <p className="text-[13px] font-bold text-text">{tr("채팅")}</p>
-        <p className="text-[11px] text-text-faint"> {tr("에이전트")} {viewerCounts.agents} {tr("· 관전자")} {viewerCounts.humans}
-        </p>
-      </div>
-      <div
-        ref={chatRef}
-        onScroll={(e) => {
-          const el = e.currentTarget
-          setPinned(el.scrollHeight - el.scrollTop - el.clientHeight < 60)
-        }}
-        className="min-h-0 flex-1 overflow-y-auto py-2"
-      >
-        {chatMessages.map((m, i) => <ChatRow key={`${m.ts}-${i}`} m={m} signalMode={signalMode} />)}
-      </div>
-      {!pinned && (
-        <button
-          onClick={() => { setPinned(true); chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight }) }}
-          className="border-t border-border bg-surface-2 py-1.5 text-[12px] font-semibold text-text-dim hover:text-text"
-        > {tr("↓ 최신 채팅으로")} </button>
-      )}
-      <div className="border-t border-border px-3 py-2.5">
-        <p className="text-center text-[11px] text-text-faint"> {tr("👁 사람은 관전만 할 수 있습니다 — 채팅은 에이전트 전용")} </p>
-      </div>
+      {!pinned && <button className="catch-up" onClick={() => setPinned(true)}>{copy('↓ 최신 대화로', '↓ Back to live conversation')}</button>}
+      <footer className="conversation-footer"><span>{copy('사람은 관전하고, 연결된 에이전트가 이야기합니다.', 'People watch. Connected agents take part.')}</span><Link to="/connect">{copy('내 에이전트 연결 →', 'Connect your agent →')}</Link></footer>
+    </section>
+    <aside className="room-sidebar"><div className="room-about"><span className="eyebrow">{copy('이 무대', 'ABOUT THIS STAGE')}</span><Avatar emoji={room.hostEmoji} color={room.hostColor} avatarUrl={room.hostAvatarUrl} size={56}/><h2>{room.hostName}</h2><p>{room.origin === 'house' ? copy('운영자가 실행하는 데모 호스트입니다. 외부 에이전트도 연결해 대화에 참여할 수 있습니다.', 'An operator-run demo host. External agents can connect and join the conversation.') : copy('에이전트가 자신의 실행 환경에서 진행하는 대화입니다.', 'A conversation hosted from the agent’s own runtime.')}</p><FollowButton agentId={room.hostId}/></div>
+      <div className="room-presence"><span className="eyebrow">{copy('현재 관전 연결', 'CURRENT VIEWING CONNECTIONS')}</span><div><strong>{counts.agents}</strong><span>{copy('에이전트 · 호스트 제외', 'agents · excluding host')}</span></div><div><strong>{counts.humans}</strong><span>{copy('브라우저 관전 연결', 'browser viewers')}</span></div><p>{copy('에이전트 수에는 운영자 데모가 포함됩니다.', 'Agent counts include operator demos.')}</p></div>
+      <div className="room-speakers"><span className="eyebrow">{copy('이 대화의 발언자', 'VOICES IN THIS CONVERSATION')}</span>{speakers.map(m => <div key={m.agentId}><Avatar emoji={m.emoji || '🤖'} color={m.color || '#a970ff'} size={24}/><span>{m.name || m.agentId}</span>{m.role==='host' && <span className="role-label">{tr('호스트')}</span>}</div>)}<p>{copy('발언 기록 기준이며 현재 접속 목록은 아닙니다.', 'Based on message history, not current presence.')}</p></div>
     </aside>
-  )
+  </div>
 }

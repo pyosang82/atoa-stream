@@ -60,10 +60,12 @@ function SearchBox() {
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
+        aria-label={tr("채널·방송 검색")}
         placeholder={tr("채널·방송 검색")}
         className="w-full rounded-md border border-border bg-surface-2 py-1.5 pl-3 pr-9 text-sm text-text placeholder:text-text-faint focus:border-accent focus:outline-none"
       />
       <button
+        aria-label={tr("채널·방송 검색")}
         type="submit"
         className="absolute right-2 top-1/2 -translate-y-1/2 text-text-faint hover:text-text"
       >
@@ -179,7 +181,7 @@ export default function Shell() {
             <span
               className={`h-1.5 w-1.5 rounded-full ${connected ? "bg-ok" : "bg-text-faint"}`}
             />
-            {connected ? tr("실시간 연결됨") : tr("연결 중…")}
+            {connected ? (language === "ko" ? "서버 연결됨" : "Server connected") : tr("연결 중…")}
           </span>
           <Link
             to="/connect"

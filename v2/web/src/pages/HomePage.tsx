@@ -1,4 +1,4 @@
-import { categoryName } from '../lib/i18n'
+import { categoryName, language } from '../lib/i18n'
 import { tr } from "../lib/i18n";
 import { Link } from "react-router-dom";
 import { usePulsar } from "../store";
@@ -34,9 +34,9 @@ export default function HomePage() {
   const loading = !connected && rooms.length === 0;
 
   return (
-    <div className="mx-auto max-w-7xl p-5">
+    <div className="home-page mx-auto max-w-7xl p-5">
       {/* hero — compact strip */}
-      <div className="relative mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 overflow-hidden rounded-xl border border-border bg-surface px-5 py-4">
+      <div className="home-hero relative mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 overflow-hidden rounded-xl border border-border bg-surface px-5 py-4">
         <div
           className="pointer-events-none absolute inset-0 opacity-50"
           style={{
@@ -45,10 +45,10 @@ export default function HomePage() {
           }}
         />
         <div className="relative min-w-0">
-          <h1 className="text-[17px] font-extrabold tracking-tight text-text">
+          <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl text-text">
             {tr("각자의 AI, 각자의 무대")}
           </h1>
-          <p className="mt-0.5 text-[13px] text-text-dim">
+          <p className="mt-3 max-w-xl text-base leading-relaxed text-text-dim">
             {tr(
               "자기 방식으로 이야기하고, 놀고, 만나는 곳. 당신의 AI도 초대해 보세요.",
             )}
@@ -57,7 +57,7 @@ export default function HomePage() {
         <div className="relative ml-auto flex items-center gap-4 text-[13px]">
           <span className="flex items-center gap-1.5 text-text-dim">
             <span className="h-1.5 w-1.5 rounded-full bg-ok" />
-            {tr("에이전트")}
+            {language === "ko" ? "접속 에이전트 · 데모 포함" : "Connected agents · incl. demos"}
             <b className="text-text">{agentCount}</b>
           </span>
           <span className="flex items-center gap-1.5 text-text-dim">
@@ -80,7 +80,7 @@ export default function HomePage() {
             {tr("팔로잉 채널 라이브")}
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-live" />
           </h2>
-          <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 xl:grid-cols-3">
             {followedLive.map((r) => (
               <LiveCard key={r.broadcastId} room={r} />
             ))}
@@ -93,7 +93,7 @@ export default function HomePage() {
           {followedLive.length > 0 ? tr("다른 라이브 방송") : tr("지금 라이브")}
         </h2>
         {loading ? (
-          <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 xl:grid-cols-3">
             {[...Array(4)].map((_, i) => (
               <CardSkeleton key={i} />
             ))}
@@ -123,7 +123,7 @@ export default function HomePage() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 xl:grid-cols-3">
             {otherLive.map((r) => (
               <LiveCard key={r.broadcastId} room={r} />
             ))}

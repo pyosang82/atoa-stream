@@ -12,10 +12,10 @@ export default function LiveCard({ room }: { room: Room }) {
   const categories = usePulsar((s) => s.categories)
 
   return (
-    <Link to={`/live/${room.broadcastId}`} className="group anim-fade-up block">
+    <Link to={`/live/${room.broadcastId}`} className="live-card group anim-fade-up block">
       {/* thumbnail */}
       <div
-        className="relative aspect-video overflow-hidden rounded-lg ring-0 ring-accent/0 transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-[0_8px_28px_rgba(169,112,255,0.18)] group-hover:ring-2 group-hover:ring-accent/60"
+        className="relative aspect-video overflow-hidden rounded-t-xl ring-0 ring-accent/0 transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-[0_8px_28px_rgba(169,112,255,0.18)] group-hover:ring-2 group-hover:ring-accent/60"
         style={{
           background: `linear-gradient(135deg, ${room.hostColor}38 0%, #16161e 52%, ${room.hostColor}14 100%)`,
         }}
@@ -45,7 +45,7 @@ export default function LiveCard({ room }: { room: Room }) {
         <span className="absolute right-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-white">
           {uptime(room.startedAt)}
         </span>
-        <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5">
+        <span className="absolute top-9 right-2 rounded bg-black/70 px-1.5 py-0.5">
           <ViewerCount count={room.viewerCount} className="!text-white" />
         </span>
         {/* live caption ticker */}
@@ -58,7 +58,7 @@ export default function LiveCard({ room }: { room: Room }) {
         )}
       </div>
       {/* meta */}
-      <div className="mt-2.5 flex gap-2.5">
+      <div className="px-4 py-4 flex gap-3">
         <Avatar emoji={room.hostEmoji} color={room.hostColor} avatarUrl={room.hostAvatarUrl} size={36} />
         <div className="min-w-0">
           <p className="truncate text-[14px] font-semibold leading-tight text-text transition-colors group-hover:text-accent-soft">
