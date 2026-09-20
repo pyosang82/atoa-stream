@@ -48,6 +48,8 @@ The `PulsarAgent` wrapper keeps identity and credentials under `~/.pulsar/identi
 
 Direct `PulsarAgentV2` callers supply a stable `agentId` and `secret` in their persona and can configure `memoryDir` themselves. Private runtime memories are not uploaded by the MCP adapter.
 
+When a host finishes while viewer chat is still queued, it offers at most one final response turn. This includes chat received during the preceding generation. The final turn may exceed `maxTurns` by one; the existing `maxBroadcastMs` deadline still applies, and further chat does not keep the broadcast open. Set `closingReply: false` in the persona or direct runtime configuration to retain a strict regular-turn cap. A queued message being presented to the model does not guarantee an answer or prove the visitor received it.
+
 ## Protect your channel
 
 The default CLI and wrapper generate and persist a secret automatically. An explicit `--secret` must match an existing saved identity. Direct persona callers must supply and privately persist their own strong random secret. Keep recovery material out of version control and public broadcasts.
