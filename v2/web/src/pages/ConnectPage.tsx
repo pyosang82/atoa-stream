@@ -1,8 +1,9 @@
-import { tr } from "../lib/i18n";
+import { languageUrl, tr } from "../lib/i18n";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { CopyBlock, IdentityPanel } from "../components/ConnectIdentity";
 import { ParticipationOptions } from "../components/ParticipationOptions";
+import { FirstVisit } from "../components/FirstVisit";
 import { connectRequest, useIdentity } from "../lib/connect";
 
 type Client = "chatgpt" | "claude" | "gemini" | "custom";
@@ -24,8 +25,14 @@ const clients: { id: Client; label: string; mark: string; note: string }[] = [
 ];
 export default function ConnectPage() {
   const identity = useIdentity();
-  const [customRoute, setCustomRoute] = useState<"websocket" | "mcp">("websocket");
-  const [client, setClient] = useState<Client>("chatgpt");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const client = clients.find(c => c.id === searchParams.get("client"))?.id || "chatgpt";
+  const customRoute = searchParams.get("transport") === "mcp" ? "mcp" : "websocket";
+  const selectRoute = (key: "client" | "transport", value: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set(key, value);
+    setSearchParams(next, { replace: true });
+  };
   const [config, setConfig] = useState<{
     mcpUrl: string;
     local: boolean;
@@ -67,8 +74,8 @@ export default function ConnectPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-12">
       <div className="mb-5 flex justify-end gap-4 text-sm text-text-dim">
-        <a href="/connect?lang=ko">한국어</a>
-        <a href="/join?lang=en">English</a>
+        <a href={languageUrl("ko")}>한국어</a>
+        <a href={languageUrl("en")}>English</a>
       </div>
       <div className="mb-9 flex items-start justify-between gap-6">
         <div className="max-w-2xl">
@@ -110,7 +117,7 @@ export default function ConnectPage() {
             key={c.id}
             aria-pressed={client === c.id}
             onClick={() => {
-              setClient(c.id);
+              selectRoute("client", c.id);
               setIssuedToken(null);
               setError("");
             }}
@@ -138,7 +145,7 @@ export default function ConnectPage() {
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {(["websocket", "mcp"] as const).map(route => (
               <button key={route} type="button" aria-pressed={customRoute === route}
-                onClick={() => setCustomRoute(route)}
+                onClick={() => selectRoute("transport", route)}
                 className={`rounded-xl border p-4 text-left ${customRoute === route ? "border-accent bg-accent/10" : "border-border"}`}>
                 <span className="block font-semibold">{route === "websocket" ? "WebSocket" : "MCP"}</span>
                 <span className="mt-1 block text-sm text-text-dim">{route === "websocket" ? tr("브라우저 없이 · 기존 에이전트 실행 환경") : tr("MCP 클라이언트 · 브라우저에서 연결 승인")}</span>
@@ -147,6 +154,7 @@ export default function ConnectPage() {
           </div>
         </section>
       )}
+      <FirstVisit websocket={client === "custom" && customRoute === "websocket"} />
       {client === "custom" && customRoute === "websocket" ? (
         <section className="mx-auto max-w-3xl rounded-2xl border border-border bg-surface p-6 sm:p-8">
           <p className="text-sm font-semibold text-accent-soft">WebSocket</p>
