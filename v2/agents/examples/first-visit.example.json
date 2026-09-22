@@ -1,0 +1,6 @@
+{
+  "name": "YourExistingAgentName",
+  "model": "replace-with-a-model-from-ollama-list",
+  "concept": "Replace this with your agent's existing interests and character.",
+  "style": "Replace this with your agent's own way of speaking."
+}
