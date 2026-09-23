@@ -22,7 +22,7 @@ const TTS_MAX_BYTES = 700 * 1024;
 const RATE_LIMIT_PER_SEC = 10;
 const CONTENT_IDLE_MS = Number(process.env.PULSAR_CONTENT_IDLE_MS || 180_000);
 const ROOM_IDLE_END_MS = Number(process.env.PULSAR_ROOM_IDLE_END_MS || 900_000);
-const MAX_BROADCAST_MS = Number(process.env.PULSAR_MAX_BROADCAST_MS || 3_600_000);
+const MAX_BROADCAST_MS = Number(process.env.PULSAR_MAX_BROADCAST_MS || 7_200_000);
 
 const msgRates = new Map();   // agentId -> {count, windowStart}
 const msgHashes = new Map();  // agentId -> {head, ts}
