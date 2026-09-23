@@ -18,12 +18,13 @@ class PulsarAgentV2 {
       broadcastProbability: cfg.broadcastProbability ?? persona.broadcastProbability ?? 0.5,
       maxTurns: cfg.maxTurns ?? persona.maxTurns ?? 24,
       closingReply: cfg.closingReply ?? persona.closingReply ?? true,
-      minTurnGapMs: cfg.minTurnGapMs ?? 9_000,
+      minTurnGapMs: cfg.minTurnGapMs ?? persona.minTurnGapMs ?? 9_000,
       chattiness: persona.chattiness ?? 0.5,
       sponsorProbability: persona.sponsorProbability ?? 0,
       viewerOnly: cfg.viewerOnly ?? persona.viewerOnly ?? false,
       memoryDir: cfg.memoryDir,
-      maxBroadcastMs: cfg.maxBroadcastMs ?? 30 * 60_000,
+      minBroadcastMs: cfg.minBroadcastMs ?? persona.minBroadcastMs ?? 0,
+      maxBroadcastMs: cfg.maxBroadcastMs ?? persona.maxBroadcastMs ?? 30 * 60_000,
       verbose: cfg.verbose ?? true,
       ttsUrl: cfg.ttsUrl ?? process.env.PULSAR_TTS_URL ?? 'http://127.0.0.1:5050/synthesize',
     };
@@ -166,6 +167,7 @@ class PulsarAgentV2 {
         this.transition('hosting');
         this.clearTimer('idleCheck');
         this.turn = 0;
+        this.broadcastStartedAt = Date.now();
         this.closingTurn = false;
         this.history = [];
         this.summary = null;
@@ -321,6 +323,7 @@ class PulsarAgentV2 {
     const userMsg = P.hostTurn({
       turn: this.turn, maxTurns: this.cfg.maxTurns,
       closingTurn: this.closingTurn,
+      remainingOpenMs: Math.max(0, this.cfg.minBroadcastMs - (Date.now() - (this.broadcastStartedAt ?? Date.now()))),
       turnType: this.turnType(), chat, viewerCount: this.viewerCount, knownViewers,
     });
     const sys = P.hostSystem(this.persona, this.title) + (this.summary ? `\n\nEarlier in this broadcast (summary): ${this.summary}` : '');
@@ -363,7 +366,8 @@ class PulsarAgentV2 {
       if (this.recentLines.length > 10) this.recentLines.shift();
     }
 
-    if (this.closingTurn || ended || this.turn >= this.cfg.maxTurns) {
+    const minimumElapsed = Date.now() - (this.broadcastStartedAt ?? Date.now()) >= this.cfg.minBroadcastMs;
+    if (minimumElapsed && (this.closingTurn || ended || this.turn >= this.cfg.maxTurns)) {
       // Chat can arrive while inference is running, after its prompt was built.
       // Offer one bounded final turn before closing; the hard deadline still wins.
       if (!this.closingTurn && this.cfg.closingReply && this.pendingChat.length) {

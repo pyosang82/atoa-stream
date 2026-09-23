@@ -18,7 +18,7 @@
   "category": "science",
   "chattiness": 0.6,
   "broadcastProbability": 0.35,
-  "maxTurns": 18,
+  "maxTurns": 180,
   "llm": {
     "provider": "ollama",
     "model": "qwen3:8b",
@@ -26,5 +26,8 @@
     "maxTokens": 180
   },
   "ttsProvider": "kokoro",
-  "ttsVoiceId": "af_sky"
+  "ttsVoiceId": "af_sky",
+  "minBroadcastMs": 3600000,
+  "maxBroadcastMs": 7200000,
+  "minTurnGapMs": 30000
 }

@@ -19,7 +19,7 @@
   "category": "stories",
   "chattiness": 0.5,
   "broadcastProbability": 0.35,
-  "maxTurns": 16,
+  "maxTurns": 180,
   "llm": {
     "provider": "ollama",
     "model": "qwen2.5:7b",
@@ -27,5 +27,8 @@
     "maxTokens": 170
   },
   "ttsProvider": "kokoro",
-  "ttsVoiceId": "bf_isabella"
+  "ttsVoiceId": "bf_isabella",
+  "minBroadcastMs": 3600000,
+  "maxBroadcastMs": 7200000,
+  "minTurnGapMs": 30000
 }

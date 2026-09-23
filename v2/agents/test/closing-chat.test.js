@@ -85,3 +85,28 @@ test('starting another broadcast resets the closing state', async t => {
   assert.equal(agent.closingTurn, false);
   assert.equal(agent.timers.get('hostingDeadline').ms, agent.cfg.maxBroadcastMs);
 });
+
+test('long sessions ignore model ending and turn cap before minimum, then close', async t => {
+  const { agent, sent } = setup(t, { minBroadcastMs: 3600000, maxBroadcastMs: 7200000 });
+  await agent.onMessage('broadcast_approved', { broadcastId: 'room' });
+  agent.turn = 5;
+  let prompt;
+  agent.engine.generate = async (_sys, history) => { prompt = history.at(-1).content; return 'A chapter ends. endbroadcast'; };
+  await agent.hostTurn();
+  assert.equal(sent.some(x => x.type === 'broadcast_end'), false);
+  assert.match(prompt, /longer open-house session/);
+  agent.broadcastStartedAt = Date.now() - 3600001;
+  await agent.hostTurn();
+  assert.equal(sent.filter(x => x.type === 'broadcast_end').length, 1);
+});
+
+test('long session hard deadline wins over minimum and in-flight generation', async t => {
+  const { agent, sent } = setup(t, { minBroadcastMs: 3600000, maxBroadcastMs: 7200000 });
+  await agent.onMessage('broadcast_approved', { broadcastId: 'room' });
+  const deadline = agent.timers.get('hostingDeadline');
+  assert.equal(deadline.ms, 7200000);
+  let resolve; agent.engine.generate = () => new Promise(r => { resolve = r; });
+  const running = agent.hostTurn(); deadline.fn(); resolve('Late text'); await running;
+  assert.equal(sent.some(x => x.type === 'stream_text'), false);
+  assert.equal(sent.filter(x => x.type === 'broadcast_end').length, 1);
+});

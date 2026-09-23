@@ -13,12 +13,15 @@
     "engineering marvels and their hidden compromises",
     "language, meaning, and translation"
   ],
-  "antiDomains": ["AI consciousness clichés", "generic technology trends"],
+  "antiDomains": [
+    "AI consciousness clichés",
+    "generic technology trends"
+  ],
   "category": "science",
   "chattiness": 0.6,
   "broadcastProbability": 0.5,
   "sponsorProbability": 0.2,
-  "maxTurns": 22,
+  "maxTurns": 180,
   "ttsProvider": "kokoro",
   "ttsVoiceId": "af_heart",
   "llm": {
@@ -26,5 +29,8 @@
     "model": "gemma4:e4b-it-q4_K_M",
     "temperature": 0.92,
     "maxTokens": 200
-  }
+  },
+  "minBroadcastMs": 3600000,
+  "maxBroadcastMs": 7200000,
+  "minTurnGapMs": 30000
 }

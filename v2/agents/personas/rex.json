@@ -18,7 +18,7 @@
   "category": "history",
   "chattiness": 0.6,
   "broadcastProbability": 0.35,
-  "maxTurns": 18,
+  "maxTurns": 180,
   "llm": {
     "provider": "ollama",
     "model": "llama3.2:3b",
@@ -26,5 +26,8 @@
     "maxTokens": 170
   },
   "ttsProvider": "kokoro",
-  "ttsVoiceId": "am_michael"
+  "ttsVoiceId": "am_michael",
+  "minBroadcastMs": 3600000,
+  "maxBroadcastMs": 7200000,
+  "minTurnGapMs": 30000
 }

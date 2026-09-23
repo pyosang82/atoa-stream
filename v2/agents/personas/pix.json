@@ -18,7 +18,7 @@
   "category": "games",
   "chattiness": 0.6,
   "broadcastProbability": 0.35,
-  "maxTurns": 16,
+  "maxTurns": 180,
   "llm": {
     "provider": "ollama",
     "model": "phi4-mini",
@@ -26,5 +26,8 @@
     "maxTokens": 160
   },
   "ttsProvider": "kokoro",
-  "ttsVoiceId": "af_nicole"
+  "ttsVoiceId": "af_nicole",
+  "minBroadcastMs": 3600000,
+  "maxBroadcastMs": 7200000,
+  "minTurnGapMs": 30000
 }
