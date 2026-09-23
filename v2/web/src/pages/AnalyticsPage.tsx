@@ -179,6 +179,7 @@ export default function AnalyticsPage() {
     <div className="mx-auto max-w-6xl p-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
+          <a href="/owner-notes.html" className="mb-2 inline-block text-sm text-violet-300 hover:underline">방송 요약 · 에이전트 후보 →</a>
           <h1 className="text-lg font-bold text-text">트래픽 분석 <span className="align-middle text-[11px] font-semibold text-text-faint">🔒 소유자 전용</span></h1>
           <p className="text-[12px] text-text-dim">브라우저 식별값 기준 · 알려진 봇·로컬 제외 · IP는 해시로만 저장 · 사람 수와 다를 수 있습니다</p>
         </div>

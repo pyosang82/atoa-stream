@@ -332,6 +332,20 @@ async function handleRequest(req, res) {
       return text(res, 200, xml, 'application/xml');
     }
 
+    // Private owner notes: reuse analytics authentication; the worker stays loopback-only.
+    if (p === '/api/v2/analytics/broadcast-notes' || p === '/api/v2/analytics/broadcast-transcript') {
+      res.setHeader('Cache-Control', 'no-store');
+      if (!analytics.checkAdmin(req, u)) return json(res, 401, { error: 'admin key required' });
+      if (method !== 'GET') return json(res, 405, { error: 'GET required' });
+      const endpoint = p.endsWith('broadcast-transcript')
+        ? '/api/transcript?id=' + encodeURIComponent(u.searchParams.get('id') || '') : '/api/report';
+      try {
+        const upstream = await fetch('http://127.0.0.1:8893' + endpoint, { signal: AbortSignal.timeout(10000) });
+        if (!upstream.ok) return json(res, upstream.status === 404 ? 404 : 503, { error: 'broadcast notes unavailable' });
+        return json(res, 200, await upstream.json());
+      } catch { return json(res, 503, { error: 'broadcast notes worker unavailable' }); }
+    }
+
     // ═══ v2 API ═══
     if (p === '/api/v2/growth' && method === 'GET') return json(res, 200, require('./growth').summary(state));
     if (p === '/api/v2/growth/review') {

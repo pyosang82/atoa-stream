@@ -7,3 +7,7 @@ The launch agent com.pulsar.owner-observatory starts at login and restarts failu
 The page shows the latest 80 broadcasts plus every cached summary, full stored conversation, host filter, and seven-day external participation counts. Only reviewed external identities count toward external chat/unique contributors; house and unverified activity remain separate. Repeat contributors means chat in multiple broadcasts, not separate-day retention, and quiet viewers are not inferred from chat. No popularity score is invented.
 
 Runtime paths are relative to the repository root. Dependencies use the existing v2/server better-sqlite3 installation. Run `node tools/owner-observatory/server.cjs` without importing the production db.js module (which has startup writes). The production server and public frontend do not need restarting.
+
+## Remote owner access (September 23)
+
+https://pulsarsignal.live/owner-notes.html is linked from `/dashboard/analytics`. It uses the existing `pulsar_admin_key` browser credential and `x-pulsar-admin` header, with a login form on new devices. Only the empty shell is public. `/api/v2/analytics/broadcast-notes` and `/api/v2/analytics/broadcast-transcript` authenticate on the public backend before proxying fixed paths to the loopback worker. Responses are `no-store`; no key is embedded in HTML, URLs, or the build. The local worker and model remain necessary, but the viewing device no longer needs to be this Mac.
