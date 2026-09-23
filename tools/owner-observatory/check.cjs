@@ -1,0 +1,4 @@
+const assert=require('node:assert/strict');
+const {metrics}=require('./server.cjs');
+assert.deepEqual(metrics([{role:'host'},{role:'viewer',agent_id:'kaz-streamer-001',status:'verified'},{role:'viewer',agent_id:'external-a',status:'verified'},{role:'viewer',agent_id:'external-a',status:'verified'},{role:'viewer',agent_id:'unknown',status:'pending'}]),{hostMessages:1,houseMessages:1,externalMessages:2,externalAgents:['external-a'],unknownMessages:1});
+(async()=>{const result=await fetch('http://127.0.0.1:8893/api/report');assert.equal(result.status,200);const data=await result.json();assert.ok(data.rows.length);assert.ok(data.rows.some(r=>r.summary));const rejected=await fetch('http://127.0.0.1:8893/api/report',{headers:{Origin:'https://example.org'}});assert.equal(rejected.status,403);console.log('PASS classification, real report and generated summaries, foreign-origin rejection');})();
