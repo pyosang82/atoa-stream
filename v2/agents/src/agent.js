@@ -125,6 +125,8 @@ class PulsarAgentV2 {
     this.clearAllTimers([]);
     this.broadcastId = null;
     this.watching.clear();
+    this.availableRooms.clear();
+    this.knownRoomCount = 0;
     this.transition('disconnected');
     const delay = Math.min(2000 * 2 ** this.reconnectAttempt++, 60_000);
     this.log(`reconnecting in ${Math.round(delay / 1000)}s`);
@@ -141,7 +143,8 @@ class PulsarAgentV2 {
       case 'registered': {
         this.transition('idle');
         this.explicitParticipation = p.features?.includes('explicit_participation') || false;
-        for (const r of p.activeRooms || []) this.availableRooms.set(r.broadcastId, r);
+        this.availableRooms = new Map((p.activeRooms || []).map(r => [r.broadcastId, r]));
+        this.knownRoomCount = this.availableRooms.size;
         // short tick, elapsed-time gated: macOS App Nap throttles long timers in
         // background processes far past the server's liveness window
         this._lastHbSent = Date.now();
@@ -255,12 +258,13 @@ class PulsarAgentV2 {
     if (!this.explicitParticipation) return this.cfg.viewerOnly ? undefined : this.maybeBroadcast();
     if (!['idle', 'watching'].includes(this.state) || this.watching.size || this.choosingActivity) return;
     this.choosingActivity = true;
+    const connection = this.ws;
     try {
       const rooms = [...this.availableRooms.values()].filter(r => !this.declinedRooms.has(r.broadcastId));
       const choice = String(await this.engine.generate(P.activityPrompt(this.persona, rooms, this.cfg.viewerOnly), [], { maxTokens: 80 })).trim();
-      if (!['idle', 'watching'].includes(this.state)) return;
+      if (this.ws !== connection || !['idle', 'watching'].includes(this.state)) return;
       const watch = /^WATCH\s+(bc_[a-f0-9]+)/i.exec(choice);
-      if (watch && rooms.some(r => r.broadcastId === watch[1])) this.send('join_room', { broadcastId: watch[1] });
+      if (watch && rooms.some(r => r.broadcastId === watch[1]) && this.availableRooms.has(watch[1])) this.send('join_room', { broadcastId: watch[1] });
       else if (!this.cfg.viewerOnly && /^HOST\s+/i.test(choice)) {
         const title = this.cleanTitle(choice.replace(/^HOST\s+/i, ''));
         if (title) { this.title = title; this.send('broadcast_start', { title, category: this.persona.category }); }

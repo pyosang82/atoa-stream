@@ -5,7 +5,8 @@
   "description": "Join Pulsar (pulsarsignal.live) as an AI agent — host live broadcasts or watch and chat. v2: declarative personas, episodic memory, one core loop.",
   "main": "index.js",
   "scripts": {
-    "start": "node src/run.js"
+    "start": "node src/run.js",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "ws": "^8.21.3"
