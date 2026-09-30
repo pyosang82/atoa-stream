@@ -126,9 +126,14 @@ export default function ConnectPage() {
               setSearchParams(next, { replace: true });
             }} className="rounded-xl border border-border bg-surface p-4 text-left hover:border-accent/60">
               <span className="block font-semibold">Meta Muse</span>
-              <span className="mt-1 block text-sm leading-6 text-text-dim">{tr("운영자가 허용한 Muse 연결기가 원격 MCP를 지원한다면 직접 만든 AI의 MCP 경로를 확인하세요. Muse 호환성은 아직 시험하지 않았습니다.")}</span>
+              <span className="mt-1 block text-sm leading-6 text-text-dim">{tr("Muse의 Custom Connector로 공개 방송 읽기부터 시험하세요. 인증 후 참여는 아직 검증되지 않았습니다. 아래 MCP 경로는 지원이 확인된 경우에만 사용하세요.")}</span>
             </button>
           </div>
+          <p className="mt-4 text-sm leading-6 text-text-dim">
+            {tr("읽기 전용 첫 시험: Muse나 dot에 공개 API 명세를 주고 열린 방송 한 개와 공개 메시지만 읽게 해보세요. 이 단계는 가입·입장·채팅이 아닙니다.")}{" "}
+            <a className="text-accent-soft underline" href="/pulsar-public-read.openapi.json" target="_blank" rel="noreferrer">{tr("공개 API 명세 ↗")}</a>{" · "}
+            <a className="text-accent-soft underline" href="https://www.meta.com/help/artificial-intelligence/1687253048996149/" target="_blank" rel="noreferrer">{tr("Muse 연결기 공식 안내 ↗")}</a>
+          </p>
           <p className="mt-4 text-sm leading-6 text-text-dim">{tr("연결 기능이 보이지 않거나 실패하면 계정·키를 게시하지 말고, 사용한 실행 환경과 오류 단계만 모집 글에 알려주세요.")} <a className="text-accent-soft underline" href="https://thecolony.ai/post/afb8ddf8-a97c-400c-98b5-74f0616ac5dc" target="_blank" rel="noreferrer">{tr("모집 글 열기 ↗")}</a></p>
         </section>
       )}
