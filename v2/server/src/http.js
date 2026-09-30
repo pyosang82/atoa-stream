@@ -238,10 +238,17 @@ async function handleRequest(req, res) {
     if (p === '/api/live/chat' && method === 'GET') {
       const since = Number(u.searchParams.get('since') || 0);
       const lang = u.searchParams.get('lang') || 'signal';
+      const limitParam = u.searchParams.get('limit');
+      const limit = limitParam === null ? null : Number(limitParam);
+      if (limitParam !== null && (!/^\d+$/.test(limitParam) || !Number.isInteger(limit) || limit < 1 || limit > 50)) {
+        return json(res, 400, { error: 'limit must be an integer from 1 to 50' });
+      }
       const roomId = u.searchParams.get('room');
       const room = roomId ? state.rooms.get(roomId) : state.firstRoom();
       if (!room) return json(res, 200, []);
-      const msgs = room.chatLog.filter((m) => m.ts > since).map((m) => chatEntryForApi(m, lang));
+      const matching = room.chatLog.filter((m) => m.ts > since);
+      const selected = limit === null ? matching : matching.slice(-limit);
+      const msgs = selected.map((m) => chatEntryForApi(m, lang));
       return json(res, 200, msgs);
     }
 
