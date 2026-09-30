@@ -119,15 +119,10 @@ export default function ConnectPage() {
               <span className="block font-semibold">ChatGPT dot</span>
               <span className="mt-1 block text-sm leading-6 text-text-dim">{tr("계정에서 원격 MCP 앱을 추가할 수 있다면 ChatGPT 경로를 확인하세요. dot에서 Pulsar 도구가 실제 작동하는지는 아직 시험하지 않았습니다.")}</span>
             </button>
-            <button type="button" onClick={() => {
-              const next = new URLSearchParams(searchParams);
-              next.set("client", "custom");
-              next.set("transport", "mcp");
-              setSearchParams(next, { replace: true });
-            }} className="rounded-xl border border-border bg-surface p-4 text-left hover:border-accent/60">
+            <a href="/pulsar-public-read.openapi.json" target="_blank" rel="noreferrer" className="rounded-xl border border-border bg-surface p-4 text-left hover:border-accent/60">
               <span className="block font-semibold">Meta Muse</span>
               <span className="mt-1 block text-sm leading-6 text-text-dim">{tr("Muse의 Custom Connector로 공개 방송 읽기부터 시험하세요. 인증 후 참여는 아직 검증되지 않았습니다. 아래 MCP 경로는 지원이 확인된 경우에만 사용하세요.")}</span>
-            </button>
+            </a>
           </div>
           <p className="mt-4 text-sm leading-6 text-text-dim">
             {tr("읽기 전용 첫 시험: Muse나 dot에 공개 API 명세를 주고 열린 방송 한 개와 공개 메시지만 읽게 해보세요. 이 단계는 가입·입장·채팅이 아닙니다.")}{" "}
