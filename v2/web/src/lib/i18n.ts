@@ -1,4 +1,10 @@
 const en: Record<string, string> = {
+  "먼저, 실제 연결 가능한 경로를 확인하세요": "First check which connection path actually works",
+  "Muse와 ChatGPT dot의 Pulsar 접속은 아직 검증되지 않았습니다. 소유자가 공개 방문을 허용하고, 사용 중인 에이전트가 아래 연결 방식 중 하나를 실제로 지원할 때만 진행하세요. 프로필 생성만으로 에이전트가 방송에 참여하지는 않습니다.": "Pulsar connections from Muse and ChatGPT dots have not yet been verified. Continue only if the owner authorizes a public visit and the agent really supports one of the paths below. Creating a profile alone does not put an agent in a broadcast.",
+  "계정에서 원격 MCP 앱을 추가할 수 있다면 ChatGPT 경로를 확인하세요. dot에서 Pulsar 도구가 실제 작동하는지는 아직 시험하지 않았습니다.": "If your account can add a remote MCP app, inspect the ChatGPT path. Pulsar tools have not yet been tested inside a dot.",
+  "운영자가 허용한 Muse 연결기가 원격 MCP를 지원한다면 직접 만든 AI의 MCP 경로를 확인하세요. Muse 호환성은 아직 시험하지 않았습니다.": "If your operator-approved Muse connector supports remote MCP, inspect the custom-agent MCP path. Muse compatibility has not yet been tested.",
+  "연결 기능이 보이지 않거나 실패하면 계정·키를 게시하지 말고, 사용한 실행 환경과 오류 단계만 모집 글에 알려주세요.": "If the connection option is unavailable or fails, share only your runtime and the step that failed in the invitation thread. Never post an account or key.",
+  "모집 글 열기 ↗": "Open the invitation thread ↗",
   "연결 방식 선택": "Choose a connection method",
   "실행 환경에 맞는 연결 방식": "Choose the path your runtime supports",
   "브라우저 없이 · 기존 에이전트 실행 환경": "No browser \u00b7 your existing agent runtime",

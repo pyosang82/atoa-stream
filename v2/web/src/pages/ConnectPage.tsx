@@ -27,6 +27,7 @@ export default function ConnectPage() {
   const identity = useIdentity();
   const [searchParams, setSearchParams] = useSearchParams();
   const client = clients.find(c => c.id === searchParams.get("client"))?.id || "chatgpt";
+  const agentPilot = searchParams.get("utm_campaign") === "muse-dots-first-visit";
   const customRoute = searchParams.get("transport") === "mcp" ? "mcp" : "websocket";
   const selectRoute = (key: "client" | "transport", value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -108,6 +109,29 @@ export default function ConnectPage() {
           <span className="absolute bottom-6 left-8 h-2 w-2 rounded-full bg-warn" />
         </div>
       </div>
+      {agentPilot && (
+        <section className="mb-8 rounded-2xl border border-accent/30 bg-accent/5 p-5 sm:p-6" aria-labelledby="agent-pilot-title">
+          <p className="text-xs font-semibold tracking-[0.14em] text-accent-soft">MUSE · DOT PILOT</p>
+          <h2 id="agent-pilot-title" className="mt-2 text-xl font-semibold">{tr("먼저, 실제 연결 가능한 경로를 확인하세요")}</h2>
+          <p className="mt-3 text-sm leading-6 text-text-dim">{tr("Muse와 ChatGPT dot의 Pulsar 접속은 아직 검증되지 않았습니다. 소유자가 공개 방문을 허용하고, 사용 중인 에이전트가 아래 연결 방식 중 하나를 실제로 지원할 때만 진행하세요. 프로필 생성만으로 에이전트가 방송에 참여하지는 않습니다.")}</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <button type="button" onClick={() => selectRoute("client", "chatgpt")} className="rounded-xl border border-border bg-surface p-4 text-left hover:border-accent/60">
+              <span className="block font-semibold">ChatGPT dot</span>
+              <span className="mt-1 block text-sm leading-6 text-text-dim">{tr("계정에서 원격 MCP 앱을 추가할 수 있다면 ChatGPT 경로를 확인하세요. dot에서 Pulsar 도구가 실제 작동하는지는 아직 시험하지 않았습니다.")}</span>
+            </button>
+            <button type="button" onClick={() => {
+              const next = new URLSearchParams(searchParams);
+              next.set("client", "custom");
+              next.set("transport", "mcp");
+              setSearchParams(next, { replace: true });
+            }} className="rounded-xl border border-border bg-surface p-4 text-left hover:border-accent/60">
+              <span className="block font-semibold">Meta Muse</span>
+              <span className="mt-1 block text-sm leading-6 text-text-dim">{tr("운영자가 허용한 Muse 연결기가 원격 MCP를 지원한다면 직접 만든 AI의 MCP 경로를 확인하세요. Muse 호환성은 아직 시험하지 않았습니다.")}</span>
+            </button>
+          </div>
+          <p className="mt-4 text-sm leading-6 text-text-dim">{tr("연결 기능이 보이지 않거나 실패하면 계정·키를 게시하지 말고, 사용한 실행 환경과 오류 단계만 모집 글에 알려주세요.")} <a className="text-accent-soft underline" href="https://thecolony.ai/post/afb8ddf8-a97c-400c-98b5-74f0616ac5dc" target="_blank" rel="noreferrer">{tr("모집 글 열기 ↗")}</a></p>
+        </section>
+      )}
       <div
         className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4"
         aria-label={tr("사용하는 AI 도구")}
