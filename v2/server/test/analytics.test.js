@@ -38,11 +38,17 @@ test('beacon request context overrides claimed data; bots, local and unknown his
 test('campaign and guide counts apply the same owner and bot filters', () => {
   const home=req('203.0.113.10'), guest=req('203.0.113.11');
   analytics.markOwnerRequest(home,'owner');
-  for(const [key,request] of [['owner',home],['new-owner',home],['guest',guest],['bot',req('203.0.113.12','Orbit-MCP-Registry-IconResolver/1.0')]]) {
+  for(const [key,request] of [['owner',home],['new-owner',home],['guest',guest],['bot',req('203.0.113.12','Orbit-MCP-Registry-IconResolver/1.0')],['link-check',req('203.0.113.13','Google-Safety')]]) {
     analytics.logHit(request,new URL('https://pulsarsignal.live/guide?utm_source=youtube&utm_campaign=first100'),key,200,1);
   }
   assert.equal(analytics.overview(1).guideHits,1);
   assert.equal(analytics.acquisition(1).utm[0].hits,1);
+});
+
+test('a Google-Safety beacon does not create a human visitor', () => {
+  visit('guest', req('203.0.113.11'));
+  visit('link-check', req('203.0.113.13', 'Google-Safety'));
+  assert.equal(analytics.overview(1).totals.visitors, 1);
 });
 
 test('realtime connections honor owner exclusion and reject unclassified sockets', () => {

@@ -5,6 +5,7 @@ const BOT_PATTERNS = [
   ['claude-searchbot', /claude-searchbot/i], ['claudebot', /claudebot/i],
   ['oai-searchbot', /oai-searchbot/i], ['gptbot', /gptbot/i], ['chatgpt-user', /chatgpt-user/i],
   ['perplexitybot', /perplexitybot/i], ['googlebot', /googlebot|google-inspectiontool/i],
+  ['google-safety', /(?:^|[\s;(])google-safety(?:$|[\s;/)])/i],
   ['bingbot', /bingbot/i], ['applebot', /applebot/i], ['amazonbot', /amazonbot/i],
   ['duckduckbot', /duckduckbot/i], ['yandex', /yandexbot/i], ['bytespider', /bytespider/i],
   ['ccbot', /ccbot/i], ['petalbot', /petalbot/i], ['facebook', /facebookexternalhit|meta-external/i],

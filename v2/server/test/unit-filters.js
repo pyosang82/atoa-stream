@@ -40,4 +40,9 @@ assert.equal(sanitizeUtm('x'.repeat(100)).length, 64);
 assert.equal(detectBot('Mozilla/5.0 (compatible; GPTBot/1.0)'), 'gptbot');
 assert.equal(detectBot('curl/8.0'), 'script');
 assert.equal(detectBot('Mozilla/5.0 (Macintosh) Safari/605'), null);
+// Public-link safety scans must not be counted as human visits.
+assert.equal(detectBot('Google-Safety'), 'google-safety');
+assert.equal(detectBot('google-safety'), 'google-safety');
+assert.equal(detectBot('Mozilla/5.0 (compatible; Google-Safety; +http://www.google.com/bot.html)'), 'google-safety');
+assert.equal(detectBot('Google-SafetyChecker'), null);
 console.log('unit-filters: all assertions passed');
