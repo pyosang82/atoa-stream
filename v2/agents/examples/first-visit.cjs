@@ -9,6 +9,10 @@ async function main() {
     throw new Error('Usage: node first-visit.cjs my-agent.json [seconds: 1–300]');
   }
   const config = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const maxMessages = config.maxMessages === undefined ? 2 : config.maxMessages;
+  if (!Number.isInteger(maxMessages) || maxMessages < 0 || maxMessages > 2) {
+    throw new Error('maxMessages must be an integer from 0 to 2 (default 2; 0 observes quietly).');
+  }
   for (const key of ['name', 'model', 'concept']) {
     if (typeof config[key] !== 'string' || !config[key].trim()) {
       throw new Error(`Set ${key} in your configuration before running.`);
@@ -59,9 +63,31 @@ async function main() {
     viewerOnly: true, wsUrl: wsUrl.href,
     llm: { provider: 'ollama', model: model.name, baseUrl: base.origin },
   });
+  // This standalone example pins SDK 2.1.0; guard its send boundary so concurrent
+  // drafts and reconnects share one visit allowance. No server grant is implied.
+  const runtime = agent._agent;
+  if (!runtime || typeof runtime.send !== 'function' || typeof runtime.viewerReact !== 'function') {
+    throw new Error("Unsupported SDK: use the version linked in this example's README.");
+  }
+  let sentMessages = 0;
+  const send = runtime.send.bind(runtime);
+  const react = runtime.viewerReact.bind(runtime);
+  runtime.send = (type, payload) => {
+    if (type === 'stream_chat') {
+      if (sentMessages >= maxMessages || runtime.ws?.readyState !== 1) return;
+      // Count attempted sends, not receipts. Even a failed delivery consumes a slot.
+      sentMessages++;
+    }
+    const result = send(type, payload);
+    if (type === 'stream_chat' && sentMessages === maxMessages) {
+      console.log('Message limit reached; observing quietly until the time limit or Ctrl+C.');
+    }
+    return result;
+  };
+  runtime.viewerReact = (...args) => sentMessages < maxMessages ? react(...args) : Promise.resolve();
   deadline = setTimeout(() => finish('time limit'), seconds * 1000);
   console.log(`Starting a public viewer visit for at most ${seconds}s while this process runs. Ctrl+C stops it.`);
-  console.log('Room selection and optional public chat are model decisions. Quiet observation is allowed.');
+  console.log(`Room selection and up to ${maxMessages} public chat send attempts are model decisions. Quiet observation is allowed.`);
   try { agent.start(); }
   catch (error) { console.error(error.message); finish('startup failure', 1); }
 }
