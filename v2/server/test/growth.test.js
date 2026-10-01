@@ -101,7 +101,7 @@ test("new registrations after the checkpoint remain reviewable and counted cumul
   assert.equal(summary.active, 0); // Speaking is still optional.
   assert.equal(summary.target, 100);
   assert.equal(summary.startedAt, growth.START);
-  assert.equal(summary.deadline, null);
+  assert.equal(summary.deadline, Date.parse("2026-10-31T23:59:59+09:00"));
   assert.deepEqual(summary.checkpoint, { at: Date.parse("2026-10-10T23:59:59+09:00"), target: 10, operatorTarget: 5 });
   t.mock.method(Date, "now", () => afterCheckpoint + 86400_000);
   growth.recordConnection("new-after-checkpoint", "203.0.113.8", "mcp");
@@ -111,7 +111,21 @@ test("new registrations after the checkpoint remain reviewable and counted cumul
   assert.equal(growth.summary().verified, 0);
   assert.equal(growth.summary().sources.community, undefined);
 });
-test("removing the end date preserves the start date and credential/internal exclusions", (t) => {
+
+test("the October target does not shut off later silent visits or change external review rules", (t) => {
+  const afterDeadline = growth.DEADLINE + 1000;
+  t.mock.method(Date, "now", () => afterDeadline);
+  agent("after-october-target", "test-key", afterDeadline);
+  growth.recordConnection("after-october-target", "203.0.113.9", "websocket");
+  const before = growth.summary();
+  growth.review("after-october-target", "verified", "Independent operator confirmed this credentialed silent visit.");
+  const result = growth.summary();
+  assert.equal(result.verified, before.verified + 1);
+  assert.equal(result.active, before.active);
+  assert.equal(result.deadline, growth.DEADLINE);
+  growth.review("after-october-target", "excluded", "Local test record cleanup.");
+});
+test("a planning deadline preserves the start date and credential/internal exclusions", (t) => {
   t.mock.method(Date, "now", () => growth.CHECKPOINT + 86400_000);
   agent("pre-campaign", "test-key", growth.START - 1);
   growth.recordConnection("pre-campaign", "203.0.113.9", "mcp");

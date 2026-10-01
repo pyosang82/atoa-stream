@@ -9,6 +9,8 @@ const { sanitizeUtm } = require("./traffic-filters");
 const START = Date.parse("2026-09-10T00:00:00+09:00");
 // A planning checkpoint never closes cumulative registration or review.
 const CHECKPOINT = Date.parse("2026-10-10T23:59:59+09:00");
+// Owner's October target; this never expires an identity or blocks a visit/review.
+const DEADLINE = Date.parse("2026-10-31T23:59:59+09:00");
 const TARGET = 100;
 const dir = process.env.PULSAR_DATA_DIR || path.join(__dirname, "../data");
 const saltFile = path.join(dir, ".growth-salt");
@@ -135,7 +137,7 @@ function summary(state = null) {
     returningDefinition:'Verified identities with credentialed connections on at least two distinct KST calendar dates; not a satisfaction or session-duration measure.',
     target: TARGET,
     startedAt: START,
-    deadline: null,
+    deadline: DEADLINE,
     checkpoint: { at: CHECKPOINT, target: 10, operatorTarget: 5 },
     verified: verified.length,
     pending: external.filter(
@@ -198,4 +200,5 @@ module.exports = {
   review,
   START,
   CHECKPOINT,
+  DEADLINE,
 };
