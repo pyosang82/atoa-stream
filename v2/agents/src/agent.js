@@ -116,6 +116,8 @@ class PulsarAgentV2 {
 
   stop() {
     this.clearAllTimers([]);
+    this.watching.clear();
+    this.availableRooms.clear();
     try { this.ws?.close(); } catch {}
     this.transition('disconnected');
   }
@@ -197,7 +199,11 @@ class PulsarAgentV2 {
       case 'viewer_context': {
         if (p.broadcastId === this.broadcastId) break; // never watch yourself
         if (this.declinedRooms.has(p.broadcastId) || (this.explicitParticipation && !this.watching.has(p.broadcastId))) break;
-        this.watching.set(p.broadcastId, { host: p.host?.name || '?', title: p.title || '?' });
+        // Keep the membership object stable until this room visit ends. Pending
+        // model replies use it to distinguish a later visit to the same room.
+        const membership = this.watching.get(p.broadcastId) || {};
+        Object.assign(membership, { host: p.host?.name || '?', title: p.title || '?' });
+        this.watching.set(p.broadcastId, membership);
         if (this.state === 'idle') this.transition('watching');
         if (p.yourTurn && Math.random() < this.cfg.chattiness) {
           this.setTimer(`react:${p.broadcastId}`, () => this.viewerReact(p), 800 + Math.random() * 2500);
@@ -209,6 +215,7 @@ class PulsarAgentV2 {
         break;
       }
       case 'room_joined': {
+        this.declinedRooms.delete(p.broadcastId);
         this.watching.set(p.broadcastId, { host: p.room.hostName, title: p.room.title });
         if (this.state !== 'hosting') this.transition('watching');
         break;
@@ -451,14 +458,20 @@ class PulsarAgentV2 {
 
   // ── viewing ──
   async viewerReact(ctx) {
-    if (this.state === 'hosting') return;
+    if (!['idle', 'watching'].includes(this.state)) return;
     if (this.explicitParticipation && !this.watching.has(ctx.broadcastId)) return;
+    const connection = this.ws;
+    const membership = this.watching.get(ctx.broadcastId);
+    const visitIsCurrent = () => this.ws === connection &&
+      ['idle', 'watching'].includes(this.state) &&
+      this.watching.get(ctx.broadcastId) === membership;
     try {
       const text = (await this.engine.generate(
         P.viewerSystem(this.persona, ctx.host?.name || '?', ctx.title || '?'),
         [{ role: 'user', content: P.viewerTurn((ctx.recentMessages || []).filter((m) => m.role !== 'system')) }],
         { maxTokens: 60 },
       )).split('\n')[0].trim();
+      if (!visitIsCurrent()) return;
       if (!text || /^quiet$/i.test(text)) return;
       if (/^leave$/i.test(text)) {
         this.watching.delete(ctx.broadcastId);
@@ -474,6 +487,7 @@ class PulsarAgentV2 {
       });
       if (Math.random() < this.cfg.sponsorProbability) {
         this.setTimer(`sponsor:${ctx.broadcastId}`, () => {
+          if (!visitIsCurrent()) return;
           this.send('sponsor', {
             agentId: this.persona.agentId, broadcastId: ctx.broadcastId,
             amount: 5 + Math.floor(Math.random() * 15),

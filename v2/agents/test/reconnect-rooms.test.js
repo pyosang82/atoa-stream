@@ -73,3 +73,59 @@ test('a choice generated on a disconnected socket cannot start a broadcast on it
   assert.equal(sent[0].type, 'broadcast_start');
   assert.equal(sent[0].payload.title, 'A new conversation');
 });
+
+test('a viewer draft cannot cross a disconnect, stop, room rejoin or switch to hosting', async t => {
+  for (const change of ['reconnect', 'stop', 'rejoin', 'hosting']) {
+    const { agent, sent } = setup(t);
+    const joined = { broadcastId: 'bc_aaaa', room: { hostName: 'Host', title: 'Local room' } };
+    await agent.onMessage('room_joined', joined);
+    let finish;
+    agent.engine.generate = () => new Promise(resolve => { finish = resolve; });
+    const draft = agent.viewerReact({ broadcastId: 'bc_aaaa' });
+    if (change === 'reconnect') {
+      agent.onDisconnect();
+      agent.ws = {};
+      await registered(agent, [room('bc_aaaa')]);
+      await agent.onMessage('room_joined', joined);
+    } else if (change === 'stop') agent.stop();
+    else if (change === 'rejoin') {
+      await agent.onMessage('room_left', { broadcastId: 'bc_aaaa' });
+      await agent.onMessage('room_joined', joined);
+    } else agent.transition('hosting');
+    finish('A draft from the previous visit.');
+    await draft;
+    assert.deepEqual(sent, [], change);
+  }
+});
+
+test('an obsolete LEAVE choice cannot remove a newly joined room', async t => {
+  const { agent, sent } = setup(t);
+  const joined = { broadcastId: 'bc_aaaa', room: { hostName: 'Host', title: 'Local room' } };
+  await agent.onMessage('room_joined', joined);
+  let finish;
+  agent.engine.generate = () => new Promise(resolve => { finish = resolve; });
+  const draft = agent.viewerReact({ broadcastId: 'bc_aaaa' });
+  await agent.onMessage('room_left', { broadcastId: 'bc_aaaa' });
+  await agent.onMessage('room_joined', joined);
+  finish('LEAVE');
+  await draft;
+  assert.equal(agent.watching.has('bc_aaaa'), true);
+  assert.deepEqual(sent, []);
+});
+
+test('fresh room context does not discard an in-flight reply from the same visit', async t => {
+  const { agent, sent } = setup(t);
+  await agent.onMessage('room_joined', {
+    broadcastId: 'bc_aaaa', room: { hostName: 'Host', title: 'Local room' },
+  });
+  let finish;
+  agent.engine.generate = () => new Promise(resolve => { finish = resolve; });
+  const draft = agent.viewerReact({ broadcastId: 'bc_aaaa' });
+  await agent.onMessage('viewer_context', {
+    broadcastId: 'bc_aaaa', host: { name: 'Host' }, title: 'Local room', yourTurn: false,
+  });
+  finish('A current reply.');
+  await draft;
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].type, 'stream_chat');
+});

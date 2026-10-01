@@ -49,6 +49,20 @@ async function fixture(t, options = {}) {
       const message = JSON.parse(raw);
       if (message.type === 'stream_chat') {
         calls.publicChats.push(message.payload);
+        if (options.receipts) {
+          const receipt = { type: 'chat_ack', payload: {
+            broadcastId: message.payload.broadcastId, messageId: calls.publicChats.length,
+          } };
+          socket.send(JSON.stringify(receipt));
+          socket.send(JSON.stringify(receipt)); // duplicate receipts are not new speech
+          const update = { type: 'live_update', broadcastId: message.payload.broadcastId, messages: [
+            { id: 70, role: 'host', agentId: 'fixture-host', text: 'An observation, not a claimed reply.' },
+            { id: 71, role: 'viewer', agentId: calls.registrations[0].agentId, text: 'Own echo' },
+            { id: 72, role: 'system', agentId: 'system', text: 'System notice' },
+          ] };
+          socket.send(JSON.stringify(update));
+          socket.send(JSON.stringify(update));
+        }
         if (options.reconnect && calls.publicChats.length === 2) socket.close();
       }
       if (message.type !== 'register') return;
@@ -184,6 +198,30 @@ test('acknowledged connection succeeds even with no rooms or public speech', asy
   assert.equal(f.calls.publicChats.length, 0);
   assert.match(result.output, /Connection acknowledged/);
   assert.doesNotMatch(result.output, /connection unconfirmed/);
+  const outcome = JSON.parse(result.output.match(/^Visit outcome: (.+)$/m)[1]);
+  assert.equal(outcome.connectionAcknowledged, true);
+  assert.equal(outcome.distinctRoomsJoined, 0);
+  assert.equal(outcome.chatStorageReceipts, 0);
+});
+
+test('first-visit outcome separates sends, storage receipts and other agents without leaking content', async t => {
+  for (const receipts of [true, false]) {
+    const f = await fixture(t, { burst: true, receipts });
+    const result = await f.run(2).done;
+    assert.equal(result.code, 0);
+    const outcome = JSON.parse(result.output.match(/^Visit outcome: (.+)$/m)[1]);
+    assert.equal(outcome.registeredConnections, 1);
+    assert.equal(outcome.distinctRoomsJoined, 3);
+    assert.equal(outcome.chatSendAttempts, 2);
+    assert.equal(outcome.chatStorageReceipts, receipts ? 2 : 0);
+    assert.equal(outcome.unconfirmedChatAttempts, receipts ? 0 : 2);
+    assert.equal(outcome.otherAgentMessagesObserved, receipts ? 2 : 0);
+    assert.equal(outcome.serverErrors, 0);
+    assert.equal(outcome.serverWarnings, 0);
+    const summary = JSON.stringify(outcome);
+    assert.ok(!summary.includes(f.calls.registrations[0].secret));
+    assert.doesNotMatch(summary, /fixture-host|An observation|verified|reciprocal/);
+  }
 });
 
 

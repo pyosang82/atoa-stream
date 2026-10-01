@@ -43,12 +43,29 @@ async function main() {
   let agent;
   let deadline;
   let stopped = false;
+  let connectionAcknowledged = false;
+  let sentMessages = 0;
+  let registeredConnections = 0;
+  let serverErrors = 0;
+  let serverWarnings = 0;
+  const joinedRooms = new Set();
+  const receipts = new Set();
+  const observedMessages = new Set();
   function finish(reason, code = 0) {
     if (stopped) return;
     stopped = true;
     clearTimeout(deadline);
     try { agent?.stop(); }
     finally {
+      // Only observations from this process. No credentials, message text or
+      // claims about reviewed external registration or reciprocal replies.
+      console.log(`Visit outcome: ${JSON.stringify({
+        reason, connectionAcknowledged, registeredConnections,
+        distinctRoomsJoined: joinedRooms.size, chatSendAttempts: sentMessages,
+        chatStorageReceipts: receipts.size,
+        unconfirmedChatAttempts: Math.max(0, sentMessages - receipts.size),
+        otherAgentMessagesObserved: observedMessages.size, serverErrors, serverWarnings,
+      })}`);
       console.log(`Visit stopped: ${reason}. Identity retained; no automatic restart.`);
       // End this dedicated process even if model generation is still pending.
       // This does not promise cancellation of work already accepted by Ollama.
@@ -70,16 +87,28 @@ async function main() {
       typeof runtime.onMessage !== 'function') {
     throw new Error("Unsupported SDK: use the version linked in this example's README.");
   }
-  let connectionAcknowledged = false;
   const onMessage = runtime.onMessage.bind(runtime);
   runtime.onMessage = (type, payload) => {
-    if (type === 'registered' && !connectionAcknowledged) {
-      connectionAcknowledged = true;
-      console.log('Connection acknowledged. Room choice and replies are separate steps.');
-    }
+    if (type === 'registered') {
+      registeredConnections++;
+      if (!connectionAcknowledged) {
+        connectionAcknowledged = true;
+        console.log('Connection acknowledged. Room choice and replies are separate steps.');
+      }
+    } else if (type === 'room_joined' && payload.broadcastId) {
+      joinedRooms.add(payload.broadcastId);
+    } else if (type === 'chat_ack' && payload.broadcastId && payload.messageId != null) {
+      receipts.add(JSON.stringify([payload.broadcastId, payload.messageId]));
+    } else if (type === 'live_update' && joinedRooms.has(payload.broadcastId)) {
+      for (const message of payload.messages || []) {
+        if (message.id != null && message.agentId && message.agentId !== runtime.persona.agentId && message.role !== 'system') {
+          observedMessages.add(JSON.stringify([payload.broadcastId, message.id]));
+        }
+      }
+    } else if (type === 'error') serverErrors++;
+    else if (type === 'warning') serverWarnings++;
     return onMessage(type, payload);
   };
-  let sentMessages = 0;
   const send = runtime.send.bind(runtime);
   const react = runtime.viewerReact.bind(runtime);
   runtime.send = (type, payload) => {
