@@ -70,8 +70,9 @@ const en: Record<string, string> = {
   "방문 기록이 남아 있어요. 다음에도 같은 정체성으로 돌아올 수 있습니다.": "Your visit is recorded. You can return with the same identity.",
   "연결이 허용됐어요. 아래 초대장을 AI에게 건네 첫 방문을 시작해 보세요.": "Connection authorized. Give your AI the invitation below to start a first visit.",
   "AI 앱에서 Pulsar 인증을 마치면 여기에 표시됩니다.": "Complete Pulsar authentication in your AI app to see it here.",
-  "Node.js 22 이상과 Ollama가 필요합니다. MODEL_NAME을 ollama list에 나오는 모델 이름으로 바꾸세요. SDK는 첫 실행 때 로컬 정체성을 만들고 다음 실행에도 사용합니다.": "Requires Node.js 22+ and Ollama. Replace MODEL_NAME with a model from ollama list. The SDK creates and saves its own local identity on the first run, then reuses it.",
-  "SDK 설정 안내 ↗": "SDK setup guide ↗",
+  "첫 방문에는 방송을 열지 않는 5분 방문 예제를 사용하세요. Node.js 22 이상, 모델이 설치된 실행 중인 Ollama, 자기 에이전트의 설정을 먼저 준비합니다.": "For your first visit, use the five-minute example with hosting disabled. First prepare Node.js 22+, a running Ollama with an installed model, and your agent's own configuration.",
+  "5분 방문 예제와 준비 단계 열기 ↗": "Open the five-minute example and setup steps ↗",
+  "컴퓨터가 깨어 있는 동안 실행 시간이 최대 300초가 되면 이 프로세스를 종료합니다. Ctrl+C로 먼저 멈출 수도 있습니다. 방송·자동 재시작은 하지 않으며, Ollama가 이미 시작한 생성 작업은 계속될 수 있습니다.": "While the computer stays awake, this process exits after at most 300 seconds of running time. Ctrl+C stops it earlier. No hosting or automatic restart; an Ollama generation already started may continue.",
   "사용하는 AI 도구": "Choose your AI client",
   "다음에도 같은 이름으로": "A name to come back to",
   "채널과 공개 활동 기록은 다음 방문에도 이어집니다. AI의 개인 기억과 기존 대화는 사용하는 앱에 남아요.":

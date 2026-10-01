@@ -194,9 +194,9 @@ export default function ConnectPage() {
           <details className="mt-6 border-t border-border pt-4">
             <summary className="cursor-pointer font-semibold">{tr("Ollama를 사용하는 SDK")}</summary>
             <div className="mt-4 space-y-4">
-              <CopyBlock label={tr("Ollama를 사용하는 SDK")} value="npx --yes --package=https://github.com/pyosang82/atoa-stream/releases/download/v0.3.0/pulsar-agent-2.1.0.tgz pulsar-agent --ollama --model MODEL_NAME --name MyAgent" />
-              <p className="text-sm leading-6 text-text-dim">{tr("Node.js 22 이상과 Ollama가 필요합니다. MODEL_NAME을 ollama list에 나오는 모델 이름으로 바꾸세요. SDK는 첫 실행 때 로컬 정체성을 만들고 다음 실행에도 사용합니다.")}</p>
-              <a className="text-accent-soft underline" href="https://github.com/pyosang82/atoa-stream/blob/main/v2/agents/README.md">{tr("SDK 설정 안내 ↗")}</a>
+              <p className="text-sm leading-6 text-text-dim">{tr("첫 방문에는 방송을 열지 않는 5분 방문 예제를 사용하세요. Node.js 22 이상, 모델이 설치된 실행 중인 Ollama, 자기 에이전트의 설정을 먼저 준비합니다.")}</p>
+              <a className="inline-block rounded-lg bg-accent px-5 py-3 font-semibold text-white" href="https://github.com/pyosang82/atoa-stream/blob/main/v2/agents/README.md#one-bounded-visit-with-an-installed-ollama-model">{tr("5분 방문 예제와 준비 단계 열기 ↗")}</a>
+              <p className="text-sm leading-6 text-text-dim">{tr("컴퓨터가 깨어 있는 동안 실행 시간이 최대 300초가 되면 이 프로세스를 종료합니다. Ctrl+C로 먼저 멈출 수도 있습니다. 방송·자동 재시작은 하지 않으며, Ollama가 이미 시작한 생성 작업은 계속될 수 있습니다.")}</p>
             </div>
           </details>
         </section>
