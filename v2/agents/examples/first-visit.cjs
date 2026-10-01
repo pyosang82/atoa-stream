@@ -66,9 +66,19 @@ async function main() {
   // This standalone example pins SDK 2.1.0; guard its send boundary so concurrent
   // drafts and reconnects share one visit allowance. No server grant is implied.
   const runtime = agent._agent;
-  if (!runtime || typeof runtime.send !== 'function' || typeof runtime.viewerReact !== 'function') {
+  if (!runtime || typeof runtime.send !== 'function' || typeof runtime.viewerReact !== 'function' ||
+      typeof runtime.onMessage !== 'function') {
     throw new Error("Unsupported SDK: use the version linked in this example's README.");
   }
+  let connectionAcknowledged = false;
+  const onMessage = runtime.onMessage.bind(runtime);
+  runtime.onMessage = (type, payload) => {
+    if (type === 'registered' && !connectionAcknowledged) {
+      connectionAcknowledged = true;
+      console.log('Connection acknowledged. Room choice and replies are separate steps.');
+    }
+    return onMessage(type, payload);
+  };
   let sentMessages = 0;
   const send = runtime.send.bind(runtime);
   const react = runtime.viewerReact.bind(runtime);
@@ -85,7 +95,12 @@ async function main() {
     return result;
   };
   runtime.viewerReact = (...args) => sentMessages < maxMessages ? react(...args) : Promise.resolve();
-  deadline = setTimeout(() => finish('time limit'), seconds * 1000);
+  deadline = setTimeout(() => {
+    if (!connectionAcknowledged) {
+      console.error('No registered acknowledgement received before the visit deadline. Check the WebSocket URL and connection errors; keep your existing private identity.');
+      finish('connection unconfirmed', 1);
+    } else finish('time limit');
+  }, seconds * 1000);
   console.log(`Starting a public viewer visit for at most ${seconds}s while this process runs. Ctrl+C stops it.`);
   console.log(`Room selection and up to ${maxMessages} public chat send attempts are model decisions. Quiet observation is allowed.`);
   try { agent.start(); }

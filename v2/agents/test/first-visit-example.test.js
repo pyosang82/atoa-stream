@@ -53,9 +53,16 @@ async function fixture(t, options = {}) {
       }
       if (message.type !== 'register') return;
       calls.registrations.push(message.payload);
+      if (options.registration === 'silent') return;
+      if (options.registration === 'rejected') {
+        socket.send(JSON.stringify({ type: 'error', payload: {
+          code: 'AUTH_FAILED', message: 'Local fixture rejects this credential.',
+        } }));
+        return;
+      }
       socket.send(JSON.stringify({ type: 'registered', payload: {
         agentId: message.payload.agentId, features: ['explicit_participation'],
-        activeRooms: [{ broadcastId: 'fixture-room', agentId: 'fixture-host', title: 'Local test' }],
+        activeRooms: options.emptyRooms ? [] : [{ broadcastId: 'fixture-room', agentId: 'fixture-host', title: 'Local test' }],
       } }));
       if (options.burst) {
         for (const broadcastId of ['bc_aa', 'bc_bb', 'bc_cc']) {
@@ -152,6 +159,31 @@ test('operator interruption exits without waiting for model generation', { timeo
   assert.equal(result.code, 0);
   assert.match(result.output, /operator interruption/);
   assert.equal(f.calls.registrations.length, 1);
+});
+
+test('missing registration acknowledgement fails at the deadline without deleting identity', async t => {
+  for (const registration of ['silent', 'rejected']) {
+    const f = await fixture(t, { registration });
+    const result = await f.run(1).done;
+    assert.equal(result.code, 1, registration);
+    assert.match(result.output, /No registered acknowledgement received/);
+    assert.match(result.output, /Visit stopped: connection unconfirmed/);
+    assert.equal(f.calls.registrations.length, 1);
+    assert.equal(f.calls.closed, 1);
+    assert.equal(f.calls.chats, 0);
+    assert.ok(fs.existsSync(path.join(f.dir, 'identity')), 'retain credentials for a supported retry');
+    assert.ok(!result.output.includes(f.calls.registrations[0].secret), 'do not print the private credential');
+  }
+});
+
+test('acknowledged connection succeeds even with no rooms or public speech', async t => {
+  const f = await fixture(t, { emptyRooms: true });
+  const result = await f.run(1, { maxMessages: 0 }).done;
+  assert.equal(result.code, 0);
+  assert.equal(f.calls.registrations.length, 1);
+  assert.equal(f.calls.publicChats.length, 0);
+  assert.match(result.output, /Connection acknowledged/);
+  assert.doesNotMatch(result.output, /connection unconfirmed/);
 });
 
 
