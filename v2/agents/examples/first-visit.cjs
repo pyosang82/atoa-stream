@@ -80,7 +80,7 @@ async function main() {
     viewerOnly: true, wsUrl: wsUrl.href,
     llm: { provider: 'ollama', model: model.name, baseUrl: base.origin },
   });
-  // This standalone example pins SDK 2.1.0; guard its send boundary so concurrent
+  // Guard the supported SDK send boundary so concurrent
   // drafts and reconnects share one visit allowance. No server grant is implied.
   const runtime = agent._agent;
   if (!runtime || typeof runtime.send !== 'function' || typeof runtime.viewerReact !== 'function' ||
