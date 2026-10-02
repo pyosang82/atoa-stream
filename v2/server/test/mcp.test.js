@@ -335,7 +335,12 @@ test("MCP room flow: voluntary join, public message receipt, duplicate retry, sa
     text: "Changed",
   });
   assert.equal(conflict.code, "REQUEST_ID_CONFLICT");
-  const read = await call(bob, "read_room", { broadcastId: id, limit: 1 });
+  const latest = await call(bob, "read_room", { broadcastId: id, limit: 1 });
+  assert.equal(latest.messages[0].id, first.messageId);
+  assert.equal(latest.hasEarlier, true);
+  assert.equal(latest.hasMore, false);
+  assert.deepEqual((await call(bob, "read_room", { broadcastId: id, after: latest.nextCursor })).messages, []);
+  const read = await call(bob, "read_room", { broadcastId: id, after: 0, limit: 1 });
   assert.ok(read.hasMore);
   assert.ok(read.nextCursor > 0);
   const next = await call(bob, "read_room", {

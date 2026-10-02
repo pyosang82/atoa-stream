@@ -186,6 +186,50 @@ test('MCP reads identify each speaker without inferring origin from names or the
   assert.equal(read(0, 2).messages[1].origin, 'house');
 });
 
+test('MCP first read reaches the present and the returned cursor follows new replies without replaying backlog', () => {
+  repo.registerAgent({ agentId: 'recent-reader', name: 'Reader' }, 'test');
+  const broadcastId = 'bc_recent_read';
+  const emptyId = 'bc_recent_empty';
+  for (const id of [broadcastId, emptyId]) {
+    repo.createBroadcast({ broadcastId: id, agentId: 'recent-reader', title: id, categorySlug: 'talk', startedAt: Date.now() });
+  }
+  const add = db.prepare('INSERT INTO messages (broadcast_id,agent_id,role,text,ts) VALUES (?,?,?,?,?)');
+  for (let i = 1; i <= 25; i++) add.run(broadcastId, 'recent-reader', 'host', `Line ${i}`, i);
+  const identity = { agentId: 'recent-reader', grantId: 'recent-read-only', scope: 'pulsar:read' };
+  const read = (args) => actions.execute('read_room', { broadcastId, limit: 3, ...args }, identity, '127.0.0.1');
+  const first = read({});
+  assert.deepEqual(first.messages.map(m => m.text), ['Line 23', 'Line 24', 'Line 25']);
+  assert.equal(first.hasEarlier, true);
+  assert.equal(first.hasMore, false);
+  assert.equal(first.nextCursor, first.messages.at(-1).id);
+  assert.ok(first.messages.every(m => m.origin === 'community'));
+  const empty = read({ broadcastId: emptyId });
+  assert.deepEqual(empty.messages, []);
+  assert.equal(empty.nextCursor, 0);
+  assert.equal(empty.hasEarlier, false);
+  // A newer message in another room must not contaminate this room or its cursor.
+  add.run(emptyId, 'recent-reader', 'host', 'Other room', 26);
+  assert.equal(read({}).nextCursor, first.nextCursor);
+  add.run(broadcastId, 'recent-reader', 'host', 'A new reply', 27);
+  const next = read({ after: first.nextCursor });
+  assert.deepEqual(next.messages.map(m => m.text), ['A new reply']);
+  assert.equal(next.hasMore, false);
+  const idle = read({ after: next.nextCursor });
+  assert.deepEqual(idle.messages, []);
+  assert.equal(idle.nextCursor, next.nextCursor);
+  // Explicit zero retains the history pagination contract for existing clients.
+  const history = read({ after: 0 });
+  assert.deepEqual(history.messages.map(m => m.text), ['Line 1', 'Line 2', 'Line 3']);
+  assert.equal(history.hasMore, true);
+  assert.equal(history.hasEarlier, false);
+  assert.deepEqual(read({ after: history.nextCursor }).messages.map(m => m.text), ['Line 4', 'Line 5', 'Line 6']);
+  db.prepare('UPDATE broadcasts SET ended_at = ? WHERE broadcast_id = ?').run(Date.now(), broadcastId);
+  assert.equal(read({}).ended, true);
+  assert.equal(read({}).messages.at(-1).text, 'A new reply');
+  assert.equal(state.agents.has(identity.agentId), false);
+  assert.equal(read({ broadcastId: emptyId }).hasEarlier, false);
+});
+
 test('a shared scene beyond the replay limit resolves with neighboring messages and author identity', () => {
   const host = register('long-replay', { participationMode: 'explicit' });
   const { broadcastId } = send(host, 'broadcast_start', {
