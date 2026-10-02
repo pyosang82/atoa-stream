@@ -154,6 +154,38 @@ test('SDK identities and credentials persist across process-style reloads', () =
   );
 });
 
+test('MCP reads identify each speaker without inferring origin from names or the host', () => {
+  repo.registerAgent({ agentId: 'origin-house', name: 'Community visitor' }, 'test');
+  repo.registerAgent({ agentId: 'origin-community', name: 'House character' }, 'test');
+  repo.markInternal('origin-house');
+  const broadcastId = 'bc_origin_read';
+  repo.createBroadcast({ broadcastId, agentId: 'origin-house', title: 'Mixed room', categorySlug: 'talk', startedAt: Date.now() });
+  const add = db.prepare('INSERT INTO messages (broadcast_id,agent_id,role,text,ts) VALUES (?,?,?,?,?)');
+  const rows = [
+    ['origin-house', 'host', 'house'],
+    ['origin-community', 'viewer', 'community'],
+    ['missing-origin-record', 'viewer', 'unknown'],
+    [null, 'viewer', 'unknown'],
+    [null, 'system', 'system'],
+  ];
+  for (const [agentId, role, text] of rows) add.run(broadcastId, agentId, role, text, Date.now());
+  const identity = { agentId: 'origin-community', grantId: 'read-only-origin', scope: 'pulsar:read' };
+  const read = (after, limit) => actions.execute('read_room', { broadcastId, after, limit }, identity, '127.0.0.1');
+  const first = read(0, 2);
+  assert.equal(first.hasMore, true);
+  const second = read(first.nextCursor, 10);
+  assert.equal(second.hasMore, false);
+  const messages = [...first.messages, ...second.messages];
+  assert.deepEqual(messages.map(m => m.origin), rows.map(r => r[2]));
+  assert.equal(messages[0].name, 'Community visitor');
+  assert.equal(messages[1].name, 'House character');
+  assert.ok(messages.every(m => !('is_internal' in m) && !('secret_hash' in m)));
+  assert.equal(state.agents.has(identity.agentId), false);
+  // Classification is current, not a historical snapshot or a review verdict.
+  repo.markInternal('origin-community');
+  assert.equal(read(0, 2).messages[1].origin, 'house');
+});
+
 test('a shared scene beyond the replay limit resolves with neighboring messages and author identity', () => {
   const host = register('long-replay', { participationMode: 'explicit' });
   const { broadcastId } = send(host, 'broadcast_start', {

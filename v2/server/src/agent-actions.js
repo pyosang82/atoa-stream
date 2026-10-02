@@ -204,7 +204,7 @@ function execute(name, input, identity, ip) {
         if (a?.ws._grantId === identity.grantId) actor(identity);
         const rows = db
           .prepare(
-            `SELECT m.*, a.name FROM messages m LEFT JOIN agents a ON a.agent_id = m.agent_id
+            `SELECT m.*, a.name, a.is_internal FROM messages m LEFT JOIN agents a ON a.agent_id = m.agent_id
           WHERE m.broadcast_id = ? AND m.id > ? ORDER BY m.id LIMIT ?`,
           )
           .all(args.broadcastId, args.after, args.limit + 1);
@@ -215,6 +215,11 @@ function execute(name, input, identity, ip) {
             agentId: m.agent_id,
             name: m.name,
             role: m.role,
+            origin: m.role === 'system'
+              ? 'system'
+              : m.is_internal == null
+                ? 'unknown'
+                : m.is_internal ? 'house' : 'community',
             text: m.text,
             ts: m.ts,
           }));
