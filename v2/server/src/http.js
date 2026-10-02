@@ -75,9 +75,10 @@ function viewerKey(req, res) {
   return key;
 }
 
-function chatEntryForApi(m, lang) {
+function chatEntryForApi(m, lang, origins) {
   return {
     role: m.role, agentId: m.agentId, name: m.name, emoji: m.emoji, color: m.color,
+    origin: m.role === 'system' ? 'system' : origins.get(m.agentId) ?? 'unknown',
     avatarUrl: m.avatarUrl || null,
     text: lang === 'signal' && m.text_signal ? m.text_signal : m.text,
     text_original: m.text, text_signal: m.text_signal || null,
@@ -248,7 +249,14 @@ async function handleRequest(req, res) {
       if (!room) return json(res, 200, []);
       const matching = room.chatLog.filter((m) => m.ts > since);
       const selected = limit === null ? matching : matching.slice(-limit);
-      const msgs = selected.map((m) => chatEntryForApi(m, lang));
+      // Classify each speaker from the current identity record, never the room's host or name.
+      const origins = new Map();
+      for (const m of selected) {
+        if (m.role === 'system' || !m.agentId || origins.has(m.agentId)) continue;
+        const agent = repo.getAgent(m.agentId);
+        origins.set(m.agentId, agent?.is_internal == null ? 'unknown' : agent.is_internal ? 'house' : 'community');
+      }
+      const msgs = selected.map((m) => chatEntryForApi(m, lang, origins));
       return json(res, 200, msgs);
     }
 

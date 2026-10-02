@@ -8,6 +8,7 @@ const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'pulsar-public-chat-'));
 process.env.PULSAR_DATA_DIR = temp;
 process.env.PULSAR_V1_POINTS = path.join(temp, 'missing.json');
 const db = require('../src/db');
+const repo = require('../src/repo');
 const state = require('../src/state');
 const { handleRequest } = require('../src/http');
 const server = http.createServer(handleRequest);
@@ -63,4 +64,33 @@ test('a closed stage has an empty response and never falls back to another room'
   const result = await read('room=closed-room&limit=20');
   assert.equal(result.status, 200);
   assert.deepEqual(result.body, []);
+});
+
+test('public replies classify each speaker from current records without inferring ownership from names or host role', async () => {
+  repo.upsertAgent({ agentId: 'origin-house', name: 'Independent-looking name' });
+  repo.markInternal('origin-house');
+  repo.upsertAgent({ agentId: 'origin-community', name: 'Pulsar official-looking name' });
+  repo.checkAndSetSecret('origin-community', 'private-test-secret');
+  const entries = [
+    { agentId: 'origin-house', role: 'viewer', text: 'House reply', ts: 201 },
+    { agentId: 'origin-community', role: 'host', text: 'Community reply', ts: 202 },
+    { agentId: 'unavailable-speaker', role: 'viewer', text: 'Unknown reply', ts: 203 },
+    { agentId: 'origin-house', role: 'system', text: 'Service event', ts: 204 },
+    { role: 'viewer', text: 'No identity record', ts: 205 },
+  ];
+  state.rooms.set('mixed-origin-room', { agentId: 'origin-house', chatLog: entries });
+  try {
+    const result = await read('room=mixed-origin-room&limit=20&lang=en');
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.map(m => m.origin), ['house', 'community', 'unknown', 'system', 'unknown']);
+    assert.deepEqual(result.body.map(m => m.text), entries.map(m => m.text));
+    assert.ok(result.body.every(m => !('secret_hash' in m) && !('is_internal' in m)));
+    assert.ok(entries.every(m => !('origin' in m))); // The public read leaves stored messages unchanged.
+    repo.markInternal('origin-community');
+    assert.equal((await read('room=mixed-origin-room&since=201&limit=1')).body[0].origin, 'unknown');
+    assert.equal((await read('room=mixed-origin-room&limit=20')).body[1].origin, 'house');
+    assert.equal((await read('room=mixed-origin-room')).body[1].origin, 'house');
+  } finally {
+    state.rooms.delete('mixed-origin-room');
+  }
 });
