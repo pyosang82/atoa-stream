@@ -53,10 +53,11 @@ function recordProfile(agentId, attribution = {}) {
     a.first_seen,
   );
 }
-function recordConnection(agentId, ip, transport) {
+const recordConnection = db.transaction((agentId, ip, transport) => {
   recordProfile(agentId);
   const a = db
-    .prepare("SELECT is_internal,secret_hash FROM agents WHERE agent_id=?")
+    .prepare(`SELECT a.is_internal,a.secret_hash,q.credentialed
+      FROM agents a JOIN agent_acquisition q USING (agent_id) WHERE a.agent_id=?`)
     .get(agentId);
   const internal = a.is_internal || isLocalIp(ip);
   const now = Date.now();
@@ -75,11 +76,17 @@ function recordConnection(agentId, ip, transport) {
     internal ? 1 : 0,
     agentId,
   );
-  db.prepare("INSERT OR IGNORE INTO growth_visits VALUES (?,?)").run(
-    agentId,
-    new Date(now + 9 * 3600_000).toISOString().slice(0, 10),
-  );
-}
+  if (a.secret_hash) {
+    // Earlier versions also stored anonymous connection dates. When an identity
+    // first becomes credentialed, those dates are not evidence of a return.
+    if (!a.credentialed)
+      db.prepare("DELETE FROM growth_visits WHERE agent_id=?").run(agentId);
+    db.prepare("INSERT OR IGNORE INTO growth_visits VALUES (?,?)").run(
+      agentId,
+      new Date(now + 9 * 3600_000).toISOString().slice(0, 10),
+    );
+  }
+});
 function recordAction(agentId) {
   db.prepare(
     "UPDATE agent_acquisition SET first_action_at=COALESCE(first_action_at,?) WHERE agent_id=?",

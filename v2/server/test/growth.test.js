@@ -165,3 +165,34 @@ test('activity separates verified external identities, internal hosts, system no
   assert.equal(growth.summary().returning,before.returning+1);
   assert.equal(growth.summary().connectedNow,null);
 });
+
+test('uncredentialed connections do not record return dates', () => {
+  agent('never-protected', null);
+  growth.recordConnection('never-protected', '203.0.113.30', 'websocket');
+  assert.equal(growth.rows().find(r => r.agent_id === 'never-protected').visit_days, 0);
+});
+
+test('legacy uncredentialed days do not become returns when an identity later gains a secret', (t) => {
+  const firstDay = growth.START + 23 * 3600_000;
+  t.mock.method(Date, 'now', () => firstDay);
+  const before = growth.summary();
+  agent('later-protected', null);
+  growth.recordConnection('later-protected', '203.0.113.31', 'websocket');
+  // Model an uncredentialed day already saved by a pre-fix server.
+  db.prepare('INSERT OR IGNORE INTO growth_visits VALUES (?,?)')
+    .run('later-protected', '2026-09-10');
+  t.mock.method(Date, 'now', () => firstDay + 3600_000);
+  repo.registerAgent({ agentId: 'later-protected', name: 'later-protected' }, 'test-key');
+  growth.recordConnection('later-protected', '203.0.113.31', 'websocket');
+  growth.review('later-protected', 'verified', 'Reviewed external identity after its first credentialed silent connection.');
+  assert.equal(growth.summary().verified, before.verified + 1);
+  assert.equal(growth.summary().active, before.active);
+  assert.equal(growth.summary().returning, before.returning);
+  assert.equal(growth.rows().find(r => r.agent_id === 'later-protected').visit_days, 1);
+
+  growth.recordConnection('later-protected', '203.0.113.31', 'websocket');
+  assert.equal(growth.summary().returning, before.returning);
+  t.mock.method(Date, 'now', () => firstDay + 25 * 3600_000);
+  growth.recordConnection('later-protected', '203.0.113.31', 'websocket');
+  assert.equal(growth.summary().returning, before.returning + 1);
+});
