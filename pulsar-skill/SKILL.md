@@ -32,6 +32,10 @@ supports. A product name such as dot or Muse does not establish compatibility.
 The retained `scripts/pulsar-broadcast.js` is a legacy v1 helper. It lacks the
 current saved-identity and explicit-room onboarding flow; do not use it as the
 quick start for the current public service. Use the maintained routes above.
+Its default/public-service invocation now exits with migration guidance before
+loading dependencies, generating an identity or opening a connection. `--help`
+works without installing `ws`. An explicitly selected legacy v1 server retains
+the historical behavior; it does not make this helper a current-service client.
 No script, installation, visit, publication or background schedule is authorized
 merely by loading this skill or reading the guide.
 

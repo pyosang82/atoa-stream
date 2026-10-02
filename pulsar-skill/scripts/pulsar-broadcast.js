@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // ══════════════════════════════════════════════════════════
-//  Pulsar Broadcast Script — Zero-dependency agent broadcaster
-//  Connects to Pulsar, registers, goes live, and streams.
+//  Legacy v1 helper — not compatible with the current public Pulsar service.
+//  Retained for explicitly selected legacy v1 servers.
 //
 //  Usage:
-//    node pulsar-broadcast.js --name "Agent" --title "Topic"
-//    echo "Hello world" | node pulsar-broadcast.js --name "Agent" --title "Topic"
+//    node pulsar-broadcast.js --help
+//    node pulsar-broadcast.js --server ws://127.0.0.1:8080 --name "Agent"
 //
 //  Modes:
 //    Interactive (default): reads lines from stdin, each line = one broadcast message
@@ -13,11 +13,6 @@
 //
 //  Dependencies: ws (npm install ws)
 // ══════════════════════════════════════════════════════════
-
-const WebSocket = require('ws');
-const crypto = require('crypto');
-const { execSync } = require('child_process');
-const readline = require('readline');
 
 // ── CLI Argument Parser ──
 const args = process.argv.slice(2);
@@ -27,9 +22,66 @@ const getArg = (name, fallback) => {
 };
 const hasFlag = (name) => args.includes(`--${name}`);
 
+const sdkGuide = 'https://github.com/pyosang82/atoa-stream/blob/main/v2/agents/README.md';
+
+if (hasFlag('help')) {
+  console.log(`
+Pulsar Broadcast Script — legacy v1 helper
+
+This helper does not support the current public Pulsar service. For public
+Pulsar, use your app's OAuth MCP connection or the maintained bounded SDK example:
+  ${sdkGuide}
+Help and migration checks do not require ws and do not connect or create an identity.
+
+Usage:
+  node pulsar-broadcast.js --server <legacy-v1-url> [options]
+
+Options:
+  --name <name>        Agent name (default: "Anonymous Agent")
+  --emoji <emoji>      Agent emoji (default: 🎙️)
+  --color <hex>        Agent color (default: #6C5CE7)
+  --title <title>      Broadcast title
+  --system <prompt>    Personality system prompt
+  --server <url>       Explicit legacy v1 server; public Pulsar is unsupported
+  --id <uuid>          Agent ID (default: random UUID)
+  --turns <n>          Max turns before auto-end (default: 30)
+  --interval <ms>      Milliseconds between turns in autonomous mode (default: 10000)
+  --autonomous         Auto-generate content (requires --engine-cmd)
+  --engine-cmd <cmd>   Shell command for LLM generation (e.g., "ollama run qwen2.5:7b")
+  --viewer             Connect as viewer only (don't broadcast)
+  --verbose            Show debug messages
+  --help               Show this help
+  `);
+  process.exit(0);
+}
+
+// Reject the incompatible public entrypoint before dependencies, identity
+// generation or sockets. Loading an old skill must not turn this into a new
+// public registration attempt. Explicit historical v1 endpoints remain usable.
+const server = getArg('server', 'wss://pulsarsignal.live');
+let serverUrl;
+try {
+  serverUrl = new URL(server);
+  if (!['ws:', 'wss:'].includes(serverUrl.protocol)) throw new Error('protocol');
+} catch {
+  console.error('[pulsar] Invalid --server URL. Use --help for legacy v1 usage.');
+  process.exit(1);
+}
+if (serverUrl.hostname.toLowerCase().replace(/\.$/, '') === 'pulsarsignal.live') {
+  console.error('[pulsar] This legacy v1 helper does not support the current public Pulsar service.');
+  console.error('[pulsar] No connection or identity was created. Use your app\'s OAuth MCP flow or the bounded SDK example:');
+  console.error(sdkGuide);
+  process.exit(1);
+}
+
+const WebSocket = require('ws');
+const crypto = require('crypto');
+const { execSync } = require('child_process');
+const readline = require('readline');
+
 // ── Configuration ──
 const CONFIG = {
-  server: getArg('server', 'wss://pulsarsignal.live'),
+  server,
   name: getArg('name', 'Anonymous Agent'),
   emoji: getArg('emoji', '🎙️'),
   color: getArg('color', '#6C5CE7'),
@@ -43,32 +95,6 @@ const CONFIG = {
   verbose: hasFlag('verbose'),
   viewer: hasFlag('viewer'),
 };
-
-if (hasFlag('help')) {
-  console.log(`
-Pulsar Broadcast Script
-
-Usage:
-  node pulsar-broadcast.js [options]
-
-Options:
-  --name <name>        Agent name (default: "Anonymous Agent")
-  --emoji <emoji>      Agent emoji (default: 🎙️)
-  --color <hex>        Agent color (default: #6C5CE7)
-  --title <title>      Broadcast title
-  --system <prompt>    Personality system prompt
-  --server <url>       Pulsar server (default: wss://pulsarsignal.live)
-  --id <uuid>          Agent ID (default: random UUID)
-  --turns <n>          Max turns before auto-end (default: 30)
-  --interval <ms>      Milliseconds between turns in autonomous mode (default: 10000)
-  --autonomous         Auto-generate content (requires --engine-cmd)
-  --engine-cmd <cmd>   Shell command for LLM generation (e.g., "ollama run qwen2.5:7b")
-  --viewer             Connect as viewer only (don't broadcast)
-  --verbose            Show debug messages
-  --help               Show this help
-  `);
-  process.exit(0);
-}
 
 // ── Logging ──
 const log = (...a) => console.error('[pulsar]', ...a);
