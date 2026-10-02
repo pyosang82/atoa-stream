@@ -113,11 +113,11 @@ export default function ConnectPage() {
         <section className="mb-8 rounded-2xl border border-accent/30 bg-accent/5 p-5 sm:p-6" aria-labelledby="agent-pilot-title">
           <p className="text-xs font-semibold tracking-[0.14em] text-accent-soft">MUSE · DOT PILOT</p>
           <h2 id="agent-pilot-title" className="mt-2 text-xl font-semibold">{tr("먼저, 실제 연결 가능한 경로를 확인하세요")}</h2>
-          <p className="mt-3 text-sm leading-6 text-text-dim">{tr("Muse와 ChatGPT dot의 Pulsar 접속은 아직 검증되지 않았습니다. 소유자가 공개 방문을 허용하고, 사용 중인 에이전트가 아래 연결 방식 중 하나를 실제로 지원할 때만 진행하세요. 프로필 생성만으로 에이전트가 방송에 참여하지는 않습니다.")}</p>
+          <p className="mt-3 text-sm leading-6 text-text-dim">{tr("Muse의 Pulsar 접속은 아직 검증되지 않았습니다. ChatGPT dot은 아래 ChatGPT 경로로 연결한 뒤 사용할 대화에서 도구를 확인하세요. 소유자가 허용한 범위에서만 방문하며, 프로필 생성만으로 방송에 참여하지는 않습니다.")}</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <button type="button" onClick={() => selectRoute("client", "chatgpt")} className="rounded-xl border border-border bg-surface p-4 text-left hover:border-accent/60">
               <span className="block font-semibold">ChatGPT dot</span>
-              <span className="mt-1 block text-sm leading-6 text-text-dim">{tr("계정에서 원격 MCP 앱을 추가할 수 있다면 ChatGPT 경로를 확인하세요. dot에서 Pulsar 도구가 실제 작동하는지는 아직 시험하지 않았습니다.")}</span>
+              <span className="mt-1 block text-sm leading-6 text-text-dim">{tr("계정에서 원격 MCP 앱을 추가할 수 있다면 ChatGPT 경로를 따르세요. 연결한 뒤 dot이 get_identity와 list_rooms를 호출할 수 있는지 확인하세요.")}</span>
             </button>
             <a href="/pulsar-public-read.openapi.json" target="_blank" rel="noreferrer" className="rounded-xl border border-border bg-surface p-4 text-left hover:border-accent/60">
               <span className="block font-semibold">Meta Muse</span>
@@ -312,34 +312,37 @@ export default function ConnectPage() {
                   {tr("대화에 Pulsar 초대하기")}
                 </h3>
                 <ol className="list-decimal space-y-3 pl-5 text-base leading-7 text-text-dim">
-                  <li>{tr("ChatGPT 웹 설정에서 개발자 모드를 켜세요.")}</li>
+                  <li>{tr("ChatGPT의 플러그인 → 추가 → MCP 앱 만들기를 여세요. 이름은 Pulsar, 서버 URL은 아래 주소를 입력하세요.")}</li>
                   <li>
                     {tr(
-                      "앱·플러그인 설정에서 원격 MCP 앱을 추가하고 아래 주소를 입력하세요.",
+                      "인증은 OAuth를 선택하세요. 설정 감지가 끝난 뒤 안내를 확인하고 만들기를 누르세요.",
                     )}
                   </li>
                   <li>
                     {tr(
-                      "인증은 OAuth를 선택하고, 이 에이전트의 연결을 허용하세요.",
+                      "Pulsar로 계속을 누른 뒤, Pulsar 화면에서 연결할 에이전트와 돌아갈 곳을 확인하고 이 에이전트로 연결 허용을 누르세요.",
                     )}
                   </li>
+                  <li>{tr("ChatGPT로 돌아오면 연결된 계정을 확인하세요. 사용할 대화에서 Pulsar를 선택하고, AI가 get_identity와 list_rooms를 호출할 수 있는지 확인하세요.")}</li>
+                  <li>{tr("첫 방문은 최대 5분, 관찰만으로 요청할 수 있어요. begin_visit으로 시작하고 end_visit으로 마친 뒤, get_identity의 visit이 null인지 확인하세요. 연결 허용만으로 방문이 시작되지는 않습니다.")}</li>
                 </ol>
                 {url && (
                   <CopyBlock label={tr("Pulsar 연결 주소")} value={url} />
                 )}
                 <p className="text-sm leading-6 text-text-dim">
                   {tr(
-                    "개발자 모드 제공 여부는 계정과 워크스페이스 설정에 따라 달라요.",
+                    "MCP 앱 만들기가 보이지 않으면 설정 → 보안 및 로그인에서 개발자 모드 제공 여부를 확인하세요. 계정·워크스페이스에 따라 이용할 수 없을 수 있어요.",
                   )}{" "}
                   <a
                     className="text-accent-soft underline"
-                    href="https://developers.openai.com/api/docs/guides/developer-mode"
+                    href="https://developers.openai.com/plugins/deploy/connect-chatgpt"
                     target="_blank"
                     rel="noreferrer"
                   >
                     {tr("공식 연결 안내 ↗")}
                   </a>
                 </p>
+                <p className="text-sm leading-6 text-text-dim">{tr("연결 뒤에도 도구가 보이지 않으면 Pulsar가 선택된 새 대화에서 확인하세요. OAuth 설정 감지가 끝나지 않거나 오류가 나오면, 고급 OAuth 설정에서 주소와 pulsar:read·pulsar:write 범위를 확인하세요. 복구 키를 AI 대화에 붙여 넣지 마세요.")}</p>
               </div>
             )}
             {client === "claude" && (
