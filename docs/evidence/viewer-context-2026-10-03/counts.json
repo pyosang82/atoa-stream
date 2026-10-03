@@ -1,0 +1,231 @@
+{
+  "syntheticLocalOnly": true,
+  "thirdPartyReview": false,
+  "reader": "Separate project-authored Python implementation; imports no server or SDK code",
+  "before": {
+    "file": "before.json",
+    "sha256": "c87e42699d41c5115ddc6a65f9a12dde0be11cac2aae8658fbc6267eb40984c2",
+    "sourceCommit": "8cb12f879ee154bd6f801eb3dd49b4780094fbfd",
+    "cases": [
+      {
+        "path": "no-audio-expected",
+        "hostCopiesInOneReactionContext": 2,
+        "hostContextIds": [
+          3,
+          null
+        ],
+        "beforeEnd": {
+          "hostLiveUpdateCount": 1,
+          "hostSQLiteRowCount": 1,
+          "liveUpdateIds": [
+            3
+          ],
+          "sqliteIds": [
+            3
+          ]
+        },
+        "afterEnd": {
+          "hostLiveUpdateCount": 1,
+          "hostSQLiteRowCount": 1,
+          "liveUpdateIds": [
+            3
+          ],
+          "sqliteIds": [
+            3
+          ]
+        }
+      },
+      {
+        "path": "browser-provider",
+        "hostCopiesInOneReactionContext": 2,
+        "hostContextIds": [
+          6,
+          null
+        ],
+        "beforeEnd": {
+          "hostLiveUpdateCount": 1,
+          "hostSQLiteRowCount": 1,
+          "liveUpdateIds": [
+            6
+          ],
+          "sqliteIds": [
+            6
+          ]
+        },
+        "afterEnd": {
+          "hostLiveUpdateCount": 1,
+          "hostSQLiteRowCount": 1,
+          "liveUpdateIds": [
+            6
+          ],
+          "sqliteIds": [
+            6
+          ]
+        }
+      },
+      {
+        "path": "no-provider",
+        "hostCopiesInOneReactionContext": 2,
+        "hostContextIds": [
+          9,
+          null
+        ],
+        "beforeEnd": {
+          "hostLiveUpdateCount": 1,
+          "hostSQLiteRowCount": 1,
+          "liveUpdateIds": [
+            9
+          ],
+          "sqliteIds": [
+            9
+          ]
+        },
+        "afterEnd": {
+          "hostLiveUpdateCount": 1,
+          "hostSQLiteRowCount": 1,
+          "liveUpdateIds": [
+            9
+          ],
+          "sqliteIds": [
+            9
+          ]
+        }
+      },
+      {
+        "path": "pending-audio-control",
+        "hostCopiesInOneReactionContext": 1,
+        "hostContextIds": [
+          null
+        ],
+        "beforeEnd": {
+          "hostLiveUpdateCount": 0,
+          "hostSQLiteRowCount": 0,
+          "liveUpdateIds": [],
+          "sqliteIds": []
+        },
+        "afterEnd": {
+          "hostLiveUpdateCount": 1,
+          "hostSQLiteRowCount": 1,
+          "liveUpdateIds": [
+            12
+          ],
+          "sqliteIds": [
+            12
+          ]
+        }
+      }
+    ]
+  },
+  "after": {
+    "file": "after.json",
+    "sha256": "2730ca9453730de89a48174cf87e77f8bdc4c3c0abbc11306d67a7e1497a020d",
+    "sourceCommit": "85ed12362547d4db9b71ac0a06c66f5cd054e83f",
+    "cases": [
+      {
+        "path": "no-audio-expected",
+        "hostCopiesInOneReactionContext": 1,
+        "hostContextIds": [
+          3
+        ],
+        "beforeEnd": {
+          "hostLiveUpdateCount": 1,
+          "hostSQLiteRowCount": 1,
+          "liveUpdateIds": [
+            3
+          ],
+          "sqliteIds": [
+            3
+          ]
+        },
+        "afterEnd": {
+          "hostLiveUpdateCount": 1,
+          "hostSQLiteRowCount": 1,
+          "liveUpdateIds": [
+            3
+          ],
+          "sqliteIds": [
+            3
+          ]
+        }
+      },
+      {
+        "path": "browser-provider",
+        "hostCopiesInOneReactionContext": 1,
+        "hostContextIds": [
+          6
+        ],
+        "beforeEnd": {
+          "hostLiveUpdateCount": 1,
+          "hostSQLiteRowCount": 1,
+          "liveUpdateIds": [
+            6
+          ],
+          "sqliteIds": [
+            6
+          ]
+        },
+        "afterEnd": {
+          "hostLiveUpdateCount": 1,
+          "hostSQLiteRowCount": 1,
+          "liveUpdateIds": [
+            6
+          ],
+          "sqliteIds": [
+            6
+          ]
+        }
+      },
+      {
+        "path": "no-provider",
+        "hostCopiesInOneReactionContext": 1,
+        "hostContextIds": [
+          9
+        ],
+        "beforeEnd": {
+          "hostLiveUpdateCount": 1,
+          "hostSQLiteRowCount": 1,
+          "liveUpdateIds": [
+            9
+          ],
+          "sqliteIds": [
+            9
+          ]
+        },
+        "afterEnd": {
+          "hostLiveUpdateCount": 1,
+          "hostSQLiteRowCount": 1,
+          "liveUpdateIds": [
+            9
+          ],
+          "sqliteIds": [
+            9
+          ]
+        }
+      },
+      {
+        "path": "pending-audio-control",
+        "hostCopiesInOneReactionContext": 1,
+        "hostContextIds": [
+          null
+        ],
+        "beforeEnd": {
+          "hostLiveUpdateCount": 0,
+          "hostSQLiteRowCount": 0,
+          "liveUpdateIds": [],
+          "sqliteIds": []
+        },
+        "afterEnd": {
+          "hostLiveUpdateCount": 1,
+          "hostSQLiteRowCount": 1,
+          "liveUpdateIds": [
+            12
+          ],
+          "sqliteIds": [
+            12
+          ]
+        }
+      }
+    ]
+  },
+  "expectationsSatisfied": true
+}

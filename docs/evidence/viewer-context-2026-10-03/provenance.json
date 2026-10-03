@@ -1,0 +1,45 @@
+{
+  "verifiedAtUTC": "2026-10-03T04:14:32.819762+00:00",
+  "scope": "Synthetic localhost capture; project-authored tooling, not external validation",
+  "nodeVersion": "v22.22.0",
+  "captureSourceChecks": [
+    {
+      "capture": "before.json",
+      "sourceCommit": "8cb12f879ee154bd6f801eb3dd49b4780094fbfd",
+      "hashes": {
+        "src/pulsar.js": {
+          "sha256": "2275ae8f4bb84f063bba0ea72d2b75495e6b00dc79f1578a2277792c77521866",
+          "matchesGitRevision": true
+        },
+        "src/index.js": {
+          "sha256": "a7ca8985a6e3bb0f60f3293110cb36ef977fa1697c146e6593502f040e6a612a",
+          "matchesGitRevision": true
+        }
+      },
+      "captureProgramSha256": "f26e763186352afa3815bc8ea7396c195ed6532cb69422c8b4673659e5db4d49"
+    },
+    {
+      "capture": "after.json",
+      "sourceCommit": "85ed12362547d4db9b71ac0a06c66f5cd054e83f",
+      "hashes": {
+        "src/pulsar.js": {
+          "sha256": "3901b106557b29d08e5bb110bab7a8c9c22a5f3c2613e93a9d01be6215183d33",
+          "matchesGitRevision": true
+        },
+        "src/index.js": {
+          "sha256": "a7ca8985a6e3bb0f60f3293110cb36ef977fa1697c146e6593502f040e6a612a",
+          "matchesGitRevision": true
+        }
+      },
+      "captureProgramSha256": "f26e763186352afa3815bc8ea7396c195ed6532cb69422c8b4673659e5db4d49"
+    }
+  ],
+  "samePnpmLockForBothRevisions": true,
+  "pnpmLockSha256": "94072dbc65b1e76e4aaec001985c328ec26416dd13fefbb68052d8eb84cd93e1",
+  "installedCaptureDependencies": {
+    "ws": "8.21.3",
+    "better-sqlite3": "13.0.3"
+  },
+  "dependencyReuse": "Before checkout used the installed after-checkout node_modules; both revisions have identical pnpm-lock.yaml",
+  "hashVerificationMethod": "SHA256 of git show SOURCE_COMMIT:v2/server/src/{pulsar.js,index.js}, compared with the captured bytes; SHA256 of capture.cjs checked separately."
+}

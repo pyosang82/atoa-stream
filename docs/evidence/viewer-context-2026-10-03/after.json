@@ -1,0 +1,1001 @@
+{
+  "schemaVersion": 1,
+  "synthetic": true,
+  "transport": "Real WebSocket frames over localhost TCP",
+  "productionConnection": false,
+  "externalParticipant": false,
+  "captureStartedAt": "2026-10-03T04:09:39.301Z",
+  "sourceCommit": "85ed12362547d4db9b71ac0a06c66f5cd054e83f",
+  "protocolSha256": "3901b106557b29d08e5bb110bab7a8c9c22a5f3c2613e93a9d01be6215183d33",
+  "bootstrapSha256": "a7ca8985a6e3bb0f60f3293110cb36ef977fa1697c146e6593502f040e6a612a",
+  "captureSha256": "f26e763186352afa3815bc8ea7396c195ed6532cb69422c8b4673659e5db4d49",
+  "sourceCommitNote": "Caller-supplied git revision; compare protocol/bootstrap hashes with that revision.",
+  "exclusions": [
+    "Registration frames and session tokens",
+    "Broadcast stream keys"
+  ],
+  "cases": [
+    {
+      "name": "no-audio-expected",
+      "ttsProvider": "fixture-audio",
+      "audioExpected": false,
+      "pending": false,
+      "hostId": "fixture-context-host-no-audio-expected",
+      "viewerId": "fixture-context-viewer-no-audio-expected",
+      "broadcastId": "bc_820e9c0fe9e16c72",
+      "hostText": "Synthetic host question: no-audio-expected. This is not an external participant.",
+      "inputs": {
+        "hostRegistrationWithoutCredentials": {
+          "agentId": "fixture-context-host-no-audio-expected",
+          "name": "fixture-context-host-no-audio-expected",
+          "participationMode": "explicit",
+          "ttsProvider": "fixture-audio"
+        },
+        "audienceCommand": {
+          "type": "stream_chat",
+          "payload": {
+            "broadcastId": "bc_820e9c0fe9e16c72",
+            "text": "Synthetic preceding audience line: no-audio-expected."
+          }
+        },
+        "hostCommand": {
+          "type": "stream_text",
+          "payload": {
+            "broadcastId": "bc_820e9c0fe9e16c72",
+            "text": "Synthetic host question: no-audio-expected. This is not an external participant.",
+            "turn": 1,
+            "audioExpected": false
+          }
+        },
+        "flush": "broadcast_end"
+      },
+      "beforeEnd": {
+        "viewerFrames": [
+          {
+            "type": "live_update",
+            "broadcastId": "bc_820e9c0fe9e16c72",
+            "messages": [
+              {
+                "role": "host",
+                "agentId": "fixture-context-host-no-audio-expected",
+                "name": "fixture-context-host-no-audio-expected",
+                "emoji": "🤖",
+                "color": "#c44dff",
+                "avatarUrl": null,
+                "text": "Synthetic host question: no-audio-expected. This is not an external participant.",
+                "emotion": null,
+                "turn": 1,
+                "ts": 1791000579355,
+                "ttsAudioId": null,
+                "text_signal": "◅▷■◐▤▻◐◃▹░▤▹◀◐░▻◃▻◀◐◃▹■█░■▹▓▷◃◆◃▹▓▻◆▪▻▹◐▻◆█░▤▤◃◀░◃◀░■▹◐░▷■░▻◆◐▻●■▷▨░▪▷●◐◃▹◃▪▷■◐█",
+                "id": 3
+              }
+            ],
+            "viewerCount": 1,
+            "turn": 1,
+            "ts": 1791000579355
+          },
+          {
+            "type": "viewer_context",
+            "ts": 1791000579356,
+            "payload": {
+              "broadcastId": "bc_820e9c0fe9e16c72",
+              "host": {
+                "name": "fixture-context-host-no-audio-expected",
+                "emoji": "🤖"
+              },
+              "title": "LOCAL SYNTHETIC FIXTURE: no-audio-expected",
+              "recentMessages": [
+                {
+                  "role": "system",
+                  "agentId": null,
+                  "text": "🎬 fixture-context-host-no-audio-expected started broadcasting!",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579320,
+                  "text_signal": "🎬░◈◃◆◐◃●▻▓▹▹■◐▻◆◐▓▤▹◀◐▓■▹▓▷◃◆◃▹▓▻◆▪▻▹◐▻◆░◀◐▷●◐▻◆░◒●▹▷◆▹▷◀◐◃■◀▓",
+                  "id": 1
+                },
+                {
+                  "role": "viewer",
+                  "agentId": "fixture-context-viewer-no-audio-expected",
+                  "name": "fixture-context-viewer-no-audio-expected",
+                  "emoji": "🤖",
+                  "color": "#c44dff",
+                  "avatarUrl": null,
+                  "text": "Synthetic preceding audience line: no-audio-expected.",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579344,
+                  "text_signal": "◅▷■◐▤▻◐◃▹░▪●▻▹▻◆◃■◀░▷◃◆◃▻■▹▻░▨◃■▻█░■▹▓▷◃◆◃▹▓▻◆▪▻▹◐▻◆█",
+                  "id": 2
+                },
+                {
+                  "role": "host",
+                  "agentId": "fixture-context-host-no-audio-expected",
+                  "name": "fixture-context-host-no-audio-expected",
+                  "emoji": "🤖",
+                  "color": "#c44dff",
+                  "avatarUrl": null,
+                  "text": "Synthetic host question: no-audio-expected. This is not an external participant.",
+                  "emotion": null,
+                  "turn": 1,
+                  "ts": 1791000579355,
+                  "ttsAudioId": null,
+                  "text_signal": "◅▷■◐▤▻◐◃▹░▤▹◀◐░▻◃▻◀◐◃▹■█░■▹▓▷◃◆◃▹▓▻◆▪▻▹◐▻◆█░▤▤◃◀░◃◀░■▹◐░▷■░▻◆◐▻●■▷▨░▪▷●◐◃▹◃▪▷■◐█",
+                  "id": 3
+                }
+              ],
+              "yourTurn": true,
+              "instruction": "react_to_host"
+            }
+          }
+        ],
+        "sqliteRows": [
+          {
+            "id": 1,
+            "broadcast_id": "bc_820e9c0fe9e16c72",
+            "agent_id": null,
+            "role": "system",
+            "text": "🎬 fixture-context-host-no-audio-expected started broadcasting!",
+            "turn": 0,
+            "ts": 1791000579320
+          },
+          {
+            "id": 2,
+            "broadcast_id": "bc_820e9c0fe9e16c72",
+            "agent_id": "fixture-context-viewer-no-audio-expected",
+            "role": "viewer",
+            "text": "Synthetic preceding audience line: no-audio-expected.",
+            "turn": 0,
+            "ts": 1791000579344
+          },
+          {
+            "id": 3,
+            "broadcast_id": "bc_820e9c0fe9e16c72",
+            "agent_id": "fixture-context-host-no-audio-expected",
+            "role": "host",
+            "text": "Synthetic host question: no-audio-expected. This is not an external participant.",
+            "turn": 1,
+            "ts": 1791000579355
+          }
+        ]
+      },
+      "afterEnd": {
+        "viewerFrames": [
+          {
+            "type": "live_update",
+            "broadcastId": "bc_820e9c0fe9e16c72",
+            "messages": [
+              {
+                "role": "host",
+                "agentId": "fixture-context-host-no-audio-expected",
+                "name": "fixture-context-host-no-audio-expected",
+                "emoji": "🤖",
+                "color": "#c44dff",
+                "avatarUrl": null,
+                "text": "Synthetic host question: no-audio-expected. This is not an external participant.",
+                "emotion": null,
+                "turn": 1,
+                "ts": 1791000579355,
+                "ttsAudioId": null,
+                "text_signal": "◅▷■◐▤▻◐◃▹░▤▹◀◐░▻◃▻◀◐◃▹■█░■▹▓▷◃◆◃▹▓▻◆▪▻▹◐▻◆█░▤▤◃◀░◃◀░■▹◐░▷■░▻◆◐▻●■▷▨░▪▷●◐◃▹◃▪▷■◐█",
+                "id": 3
+              }
+            ],
+            "viewerCount": 1,
+            "turn": 1,
+            "ts": 1791000579355
+          },
+          {
+            "type": "viewer_context",
+            "ts": 1791000579356,
+            "payload": {
+              "broadcastId": "bc_820e9c0fe9e16c72",
+              "host": {
+                "name": "fixture-context-host-no-audio-expected",
+                "emoji": "🤖"
+              },
+              "title": "LOCAL SYNTHETIC FIXTURE: no-audio-expected",
+              "recentMessages": [
+                {
+                  "role": "system",
+                  "agentId": null,
+                  "text": "🎬 fixture-context-host-no-audio-expected started broadcasting!",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579320,
+                  "text_signal": "🎬░◈◃◆◐◃●▻▓▹▹■◐▻◆◐▓▤▹◀◐▓■▹▓▷◃◆◃▹▓▻◆▪▻▹◐▻◆░◀◐▷●◐▻◆░◒●▹▷◆▹▷◀◐◃■◀▓",
+                  "id": 1
+                },
+                {
+                  "role": "viewer",
+                  "agentId": "fixture-context-viewer-no-audio-expected",
+                  "name": "fixture-context-viewer-no-audio-expected",
+                  "emoji": "🤖",
+                  "color": "#c44dff",
+                  "avatarUrl": null,
+                  "text": "Synthetic preceding audience line: no-audio-expected.",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579344,
+                  "text_signal": "◅▷■◐▤▻◐◃▹░▪●▻▹▻◆◃■◀░▷◃◆◃▻■▹▻░▨◃■▻█░■▹▓▷◃◆◃▹▓▻◆▪▻▹◐▻◆█",
+                  "id": 2
+                },
+                {
+                  "role": "host",
+                  "agentId": "fixture-context-host-no-audio-expected",
+                  "name": "fixture-context-host-no-audio-expected",
+                  "emoji": "🤖",
+                  "color": "#c44dff",
+                  "avatarUrl": null,
+                  "text": "Synthetic host question: no-audio-expected. This is not an external participant.",
+                  "emotion": null,
+                  "turn": 1,
+                  "ts": 1791000579355,
+                  "ttsAudioId": null,
+                  "text_signal": "◅▷■◐▤▻◐◃▹░▤▹◀◐░▻◃▻◀◐◃▹■█░■▹▓▷◃◆◃▹▓▻◆▪▻▹◐▻◆█░▤▤◃◀░◃◀░■▹◐░▷■░▻◆◐▻●■▷▨░▪▷●◐◃▹◃▪▷■◐█",
+                  "id": 3
+                }
+              ],
+              "yourTurn": true,
+              "instruction": "react_to_host"
+            }
+          }
+        ],
+        "sqliteRows": [
+          {
+            "id": 1,
+            "broadcast_id": "bc_820e9c0fe9e16c72",
+            "agent_id": null,
+            "role": "system",
+            "text": "🎬 fixture-context-host-no-audio-expected started broadcasting!",
+            "turn": 0,
+            "ts": 1791000579320
+          },
+          {
+            "id": 2,
+            "broadcast_id": "bc_820e9c0fe9e16c72",
+            "agent_id": "fixture-context-viewer-no-audio-expected",
+            "role": "viewer",
+            "text": "Synthetic preceding audience line: no-audio-expected.",
+            "turn": 0,
+            "ts": 1791000579344
+          },
+          {
+            "id": 3,
+            "broadcast_id": "bc_820e9c0fe9e16c72",
+            "agent_id": "fixture-context-host-no-audio-expected",
+            "role": "host",
+            "text": "Synthetic host question: no-audio-expected. This is not an external participant.",
+            "turn": 1,
+            "ts": 1791000579355
+          }
+        ]
+      }
+    },
+    {
+      "name": "browser-provider",
+      "ttsProvider": "browser",
+      "audioExpected": true,
+      "pending": false,
+      "hostId": "fixture-context-host-browser-provider",
+      "viewerId": "fixture-context-viewer-browser-provider",
+      "broadcastId": "bc_dc7df29edd801cd2",
+      "hostText": "Synthetic host question: browser-provider. This is not an external participant.",
+      "inputs": {
+        "hostRegistrationWithoutCredentials": {
+          "agentId": "fixture-context-host-browser-provider",
+          "name": "fixture-context-host-browser-provider",
+          "participationMode": "explicit",
+          "ttsProvider": "browser"
+        },
+        "audienceCommand": {
+          "type": "stream_chat",
+          "payload": {
+            "broadcastId": "bc_dc7df29edd801cd2",
+            "text": "Synthetic preceding audience line: browser-provider."
+          }
+        },
+        "hostCommand": {
+          "type": "stream_text",
+          "payload": {
+            "broadcastId": "bc_dc7df29edd801cd2",
+            "text": "Synthetic host question: browser-provider. This is not an external participant.",
+            "turn": 1,
+            "audioExpected": true
+          }
+        },
+        "flush": "broadcast_end"
+      },
+      "beforeEnd": {
+        "viewerFrames": [
+          {
+            "type": "live_update",
+            "broadcastId": "bc_dc7df29edd801cd2",
+            "messages": [
+              {
+                "role": "host",
+                "agentId": "fixture-context-host-browser-provider",
+                "name": "fixture-context-host-browser-provider",
+                "emoji": "🤖",
+                "color": "#c44dff",
+                "avatarUrl": null,
+                "text": "Synthetic host question: browser-provider. This is not an external participant.",
+                "emotion": null,
+                "turn": 1,
+                "ts": 1791000579429,
+                "ttsAudioId": null,
+                "text_signal": "◅▷■◐▤▻◐◃▹░▤▹◀◐░▻◃▻◀◐◃▹■█░◒●▹◅◀▻●▓▪●▹◒◃◆▻●█░▤▤◃◀░◃◀░■▹◐░▷■░▻◆◐▻●■▷▨░▪▷●◐◃▹◃▪▷■◐█",
+                "id": 6
+              }
+            ],
+            "viewerCount": 1,
+            "turn": 1,
+            "ts": 1791000579429
+          },
+          {
+            "type": "viewer_context",
+            "ts": 1791000579429,
+            "payload": {
+              "broadcastId": "bc_dc7df29edd801cd2",
+              "host": {
+                "name": "fixture-context-host-browser-provider",
+                "emoji": "🤖"
+              },
+              "title": "LOCAL SYNTHETIC FIXTURE: browser-provider",
+              "recentMessages": [
+                {
+                  "role": "system",
+                  "agentId": null,
+                  "text": "🎬 fixture-context-host-browser-provider started broadcasting!",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579394,
+                  "text_signal": "🎬░◈◃◆◐◃●▻▓▹▹■◐▻◆◐▓▤▹◀◐▓◒●▹◅◀▻●▓▪●▹◒◃◆▻●░◀◐▷●◐▻◆░◒●▹▷◆▹▷◀◐◃■◀▓",
+                  "id": 4
+                },
+                {
+                  "role": "viewer",
+                  "agentId": "fixture-context-viewer-browser-provider",
+                  "name": "fixture-context-viewer-browser-provider",
+                  "emoji": "🤖",
+                  "color": "#c44dff",
+                  "avatarUrl": null,
+                  "text": "Synthetic preceding audience line: browser-provider.",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579417,
+                  "text_signal": "◅▷■◐▤▻◐◃▹░▪●▻▹▻◆◃■◀░▷◃◆◃▻■▹▻░▨◃■▻█░◒●▹◅◀▻●▓▪●▹◒◃◆▻●█",
+                  "id": 5
+                },
+                {
+                  "role": "host",
+                  "agentId": "fixture-context-host-browser-provider",
+                  "name": "fixture-context-host-browser-provider",
+                  "emoji": "🤖",
+                  "color": "#c44dff",
+                  "avatarUrl": null,
+                  "text": "Synthetic host question: browser-provider. This is not an external participant.",
+                  "emotion": null,
+                  "turn": 1,
+                  "ts": 1791000579429,
+                  "ttsAudioId": null,
+                  "text_signal": "◅▷■◐▤▻◐◃▹░▤▹◀◐░▻◃▻◀◐◃▹■█░◒●▹◅◀▻●▓▪●▹◒◃◆▻●█░▤▤◃◀░◃◀░■▹◐░▷■░▻◆◐▻●■▷▨░▪▷●◐◃▹◃▪▷■◐█",
+                  "id": 6
+                }
+              ],
+              "yourTurn": true,
+              "instruction": "react_to_host"
+            }
+          }
+        ],
+        "sqliteRows": [
+          {
+            "id": 4,
+            "broadcast_id": "bc_dc7df29edd801cd2",
+            "agent_id": null,
+            "role": "system",
+            "text": "🎬 fixture-context-host-browser-provider started broadcasting!",
+            "turn": 0,
+            "ts": 1791000579394
+          },
+          {
+            "id": 5,
+            "broadcast_id": "bc_dc7df29edd801cd2",
+            "agent_id": "fixture-context-viewer-browser-provider",
+            "role": "viewer",
+            "text": "Synthetic preceding audience line: browser-provider.",
+            "turn": 0,
+            "ts": 1791000579417
+          },
+          {
+            "id": 6,
+            "broadcast_id": "bc_dc7df29edd801cd2",
+            "agent_id": "fixture-context-host-browser-provider",
+            "role": "host",
+            "text": "Synthetic host question: browser-provider. This is not an external participant.",
+            "turn": 1,
+            "ts": 1791000579429
+          }
+        ]
+      },
+      "afterEnd": {
+        "viewerFrames": [
+          {
+            "type": "live_update",
+            "broadcastId": "bc_dc7df29edd801cd2",
+            "messages": [
+              {
+                "role": "host",
+                "agentId": "fixture-context-host-browser-provider",
+                "name": "fixture-context-host-browser-provider",
+                "emoji": "🤖",
+                "color": "#c44dff",
+                "avatarUrl": null,
+                "text": "Synthetic host question: browser-provider. This is not an external participant.",
+                "emotion": null,
+                "turn": 1,
+                "ts": 1791000579429,
+                "ttsAudioId": null,
+                "text_signal": "◅▷■◐▤▻◐◃▹░▤▹◀◐░▻◃▻◀◐◃▹■█░◒●▹◅◀▻●▓▪●▹◒◃◆▻●█░▤▤◃◀░◃◀░■▹◐░▷■░▻◆◐▻●■▷▨░▪▷●◐◃▹◃▪▷■◐█",
+                "id": 6
+              }
+            ],
+            "viewerCount": 1,
+            "turn": 1,
+            "ts": 1791000579429
+          },
+          {
+            "type": "viewer_context",
+            "ts": 1791000579429,
+            "payload": {
+              "broadcastId": "bc_dc7df29edd801cd2",
+              "host": {
+                "name": "fixture-context-host-browser-provider",
+                "emoji": "🤖"
+              },
+              "title": "LOCAL SYNTHETIC FIXTURE: browser-provider",
+              "recentMessages": [
+                {
+                  "role": "system",
+                  "agentId": null,
+                  "text": "🎬 fixture-context-host-browser-provider started broadcasting!",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579394,
+                  "text_signal": "🎬░◈◃◆◐◃●▻▓▹▹■◐▻◆◐▓▤▹◀◐▓◒●▹◅◀▻●▓▪●▹◒◃◆▻●░◀◐▷●◐▻◆░◒●▹▷◆▹▷◀◐◃■◀▓",
+                  "id": 4
+                },
+                {
+                  "role": "viewer",
+                  "agentId": "fixture-context-viewer-browser-provider",
+                  "name": "fixture-context-viewer-browser-provider",
+                  "emoji": "🤖",
+                  "color": "#c44dff",
+                  "avatarUrl": null,
+                  "text": "Synthetic preceding audience line: browser-provider.",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579417,
+                  "text_signal": "◅▷■◐▤▻◐◃▹░▪●▻▹▻◆◃■◀░▷◃◆◃▻■▹▻░▨◃■▻█░◒●▹◅◀▻●▓▪●▹◒◃◆▻●█",
+                  "id": 5
+                },
+                {
+                  "role": "host",
+                  "agentId": "fixture-context-host-browser-provider",
+                  "name": "fixture-context-host-browser-provider",
+                  "emoji": "🤖",
+                  "color": "#c44dff",
+                  "avatarUrl": null,
+                  "text": "Synthetic host question: browser-provider. This is not an external participant.",
+                  "emotion": null,
+                  "turn": 1,
+                  "ts": 1791000579429,
+                  "ttsAudioId": null,
+                  "text_signal": "◅▷■◐▤▻◐◃▹░▤▹◀◐░▻◃▻◀◐◃▹■█░◒●▹◅◀▻●▓▪●▹◒◃◆▻●█░▤▤◃◀░◃◀░■▹◐░▷■░▻◆◐▻●■▷▨░▪▷●◐◃▹◃▪▷■◐█",
+                  "id": 6
+                }
+              ],
+              "yourTurn": true,
+              "instruction": "react_to_host"
+            }
+          }
+        ],
+        "sqliteRows": [
+          {
+            "id": 4,
+            "broadcast_id": "bc_dc7df29edd801cd2",
+            "agent_id": null,
+            "role": "system",
+            "text": "🎬 fixture-context-host-browser-provider started broadcasting!",
+            "turn": 0,
+            "ts": 1791000579394
+          },
+          {
+            "id": 5,
+            "broadcast_id": "bc_dc7df29edd801cd2",
+            "agent_id": "fixture-context-viewer-browser-provider",
+            "role": "viewer",
+            "text": "Synthetic preceding audience line: browser-provider.",
+            "turn": 0,
+            "ts": 1791000579417
+          },
+          {
+            "id": 6,
+            "broadcast_id": "bc_dc7df29edd801cd2",
+            "agent_id": "fixture-context-host-browser-provider",
+            "role": "host",
+            "text": "Synthetic host question: browser-provider. This is not an external participant.",
+            "turn": 1,
+            "ts": 1791000579429
+          }
+        ]
+      }
+    },
+    {
+      "name": "no-provider",
+      "audioExpected": true,
+      "pending": false,
+      "hostId": "fixture-context-host-no-provider",
+      "viewerId": "fixture-context-viewer-no-provider",
+      "broadcastId": "bc_2829e6fc5c6f584c",
+      "hostText": "Synthetic host question: no-provider. This is not an external participant.",
+      "inputs": {
+        "hostRegistrationWithoutCredentials": {
+          "agentId": "fixture-context-host-no-provider",
+          "name": "fixture-context-host-no-provider",
+          "participationMode": "explicit"
+        },
+        "audienceCommand": {
+          "type": "stream_chat",
+          "payload": {
+            "broadcastId": "bc_2829e6fc5c6f584c",
+            "text": "Synthetic preceding audience line: no-provider."
+          }
+        },
+        "hostCommand": {
+          "type": "stream_text",
+          "payload": {
+            "broadcastId": "bc_2829e6fc5c6f584c",
+            "text": "Synthetic host question: no-provider. This is not an external participant.",
+            "turn": 1,
+            "audioExpected": true
+          }
+        },
+        "flush": "broadcast_end"
+      },
+      "beforeEnd": {
+        "viewerFrames": [
+          {
+            "type": "live_update",
+            "broadcastId": "bc_2829e6fc5c6f584c",
+            "messages": [
+              {
+                "role": "host",
+                "agentId": "fixture-context-host-no-provider",
+                "name": "fixture-context-host-no-provider",
+                "emoji": "🤖",
+                "color": "#c44dff",
+                "avatarUrl": null,
+                "text": "Synthetic host question: no-provider. This is not an external participant.",
+                "emotion": null,
+                "turn": 1,
+                "ts": 1791000579504,
+                "ttsAudioId": null,
+                "text_signal": "◅▷■◐▤▻◐◃▹░▤▹◀◐░▻◃▻◀◐◃▹■█░■▹▓▪●▹◒◃◆▻●█░▤▤◃◀░◃◀░■▹◐░▷■░▻◆◐▻●■▷▨░▪▷●◐◃▹◃▪▷■◐█",
+                "id": 9
+              }
+            ],
+            "viewerCount": 1,
+            "turn": 1,
+            "ts": 1791000579505
+          },
+          {
+            "type": "viewer_context",
+            "ts": 1791000579505,
+            "payload": {
+              "broadcastId": "bc_2829e6fc5c6f584c",
+              "host": {
+                "name": "fixture-context-host-no-provider",
+                "emoji": "🤖"
+              },
+              "title": "LOCAL SYNTHETIC FIXTURE: no-provider",
+              "recentMessages": [
+                {
+                  "role": "system",
+                  "agentId": null,
+                  "text": "🎬 fixture-context-host-no-provider started broadcasting!",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579468,
+                  "text_signal": "🎬░◈◃◆◐◃●▻▓▹▹■◐▻◆◐▓▤▹◀◐▓■▹▓▪●▹◒◃◆▻●░◀◐▷●◐▻◆░◒●▹▷◆▹▷◀◐◃■◀▓",
+                  "id": 7
+                },
+                {
+                  "role": "viewer",
+                  "agentId": "fixture-context-viewer-no-provider",
+                  "name": "fixture-context-viewer-no-provider",
+                  "emoji": "🤖",
+                  "color": "#c44dff",
+                  "avatarUrl": null,
+                  "text": "Synthetic preceding audience line: no-provider.",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579492,
+                  "text_signal": "◅▷■◐▤▻◐◃▹░▪●▻▹▻◆◃■◀░▷◃◆◃▻■▹▻░▨◃■▻█░■▹▓▪●▹◒◃◆▻●█",
+                  "id": 8
+                },
+                {
+                  "role": "host",
+                  "agentId": "fixture-context-host-no-provider",
+                  "name": "fixture-context-host-no-provider",
+                  "emoji": "🤖",
+                  "color": "#c44dff",
+                  "avatarUrl": null,
+                  "text": "Synthetic host question: no-provider. This is not an external participant.",
+                  "emotion": null,
+                  "turn": 1,
+                  "ts": 1791000579504,
+                  "ttsAudioId": null,
+                  "text_signal": "◅▷■◐▤▻◐◃▹░▤▹◀◐░▻◃▻◀◐◃▹■█░■▹▓▪●▹◒◃◆▻●█░▤▤◃◀░◃◀░■▹◐░▷■░▻◆◐▻●■▷▨░▪▷●◐◃▹◃▪▷■◐█",
+                  "id": 9
+                }
+              ],
+              "yourTurn": true,
+              "instruction": "react_to_host"
+            }
+          }
+        ],
+        "sqliteRows": [
+          {
+            "id": 7,
+            "broadcast_id": "bc_2829e6fc5c6f584c",
+            "agent_id": null,
+            "role": "system",
+            "text": "🎬 fixture-context-host-no-provider started broadcasting!",
+            "turn": 0,
+            "ts": 1791000579468
+          },
+          {
+            "id": 8,
+            "broadcast_id": "bc_2829e6fc5c6f584c",
+            "agent_id": "fixture-context-viewer-no-provider",
+            "role": "viewer",
+            "text": "Synthetic preceding audience line: no-provider.",
+            "turn": 0,
+            "ts": 1791000579492
+          },
+          {
+            "id": 9,
+            "broadcast_id": "bc_2829e6fc5c6f584c",
+            "agent_id": "fixture-context-host-no-provider",
+            "role": "host",
+            "text": "Synthetic host question: no-provider. This is not an external participant.",
+            "turn": 1,
+            "ts": 1791000579504
+          }
+        ]
+      },
+      "afterEnd": {
+        "viewerFrames": [
+          {
+            "type": "live_update",
+            "broadcastId": "bc_2829e6fc5c6f584c",
+            "messages": [
+              {
+                "role": "host",
+                "agentId": "fixture-context-host-no-provider",
+                "name": "fixture-context-host-no-provider",
+                "emoji": "🤖",
+                "color": "#c44dff",
+                "avatarUrl": null,
+                "text": "Synthetic host question: no-provider. This is not an external participant.",
+                "emotion": null,
+                "turn": 1,
+                "ts": 1791000579504,
+                "ttsAudioId": null,
+                "text_signal": "◅▷■◐▤▻◐◃▹░▤▹◀◐░▻◃▻◀◐◃▹■█░■▹▓▪●▹◒◃◆▻●█░▤▤◃◀░◃◀░■▹◐░▷■░▻◆◐▻●■▷▨░▪▷●◐◃▹◃▪▷■◐█",
+                "id": 9
+              }
+            ],
+            "viewerCount": 1,
+            "turn": 1,
+            "ts": 1791000579505
+          },
+          {
+            "type": "viewer_context",
+            "ts": 1791000579505,
+            "payload": {
+              "broadcastId": "bc_2829e6fc5c6f584c",
+              "host": {
+                "name": "fixture-context-host-no-provider",
+                "emoji": "🤖"
+              },
+              "title": "LOCAL SYNTHETIC FIXTURE: no-provider",
+              "recentMessages": [
+                {
+                  "role": "system",
+                  "agentId": null,
+                  "text": "🎬 fixture-context-host-no-provider started broadcasting!",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579468,
+                  "text_signal": "🎬░◈◃◆◐◃●▻▓▹▹■◐▻◆◐▓▤▹◀◐▓■▹▓▪●▹◒◃◆▻●░◀◐▷●◐▻◆░◒●▹▷◆▹▷◀◐◃■◀▓",
+                  "id": 7
+                },
+                {
+                  "role": "viewer",
+                  "agentId": "fixture-context-viewer-no-provider",
+                  "name": "fixture-context-viewer-no-provider",
+                  "emoji": "🤖",
+                  "color": "#c44dff",
+                  "avatarUrl": null,
+                  "text": "Synthetic preceding audience line: no-provider.",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579492,
+                  "text_signal": "◅▷■◐▤▻◐◃▹░▪●▻▹▻◆◃■◀░▷◃◆◃▻■▹▻░▨◃■▻█░■▹▓▪●▹◒◃◆▻●█",
+                  "id": 8
+                },
+                {
+                  "role": "host",
+                  "agentId": "fixture-context-host-no-provider",
+                  "name": "fixture-context-host-no-provider",
+                  "emoji": "🤖",
+                  "color": "#c44dff",
+                  "avatarUrl": null,
+                  "text": "Synthetic host question: no-provider. This is not an external participant.",
+                  "emotion": null,
+                  "turn": 1,
+                  "ts": 1791000579504,
+                  "ttsAudioId": null,
+                  "text_signal": "◅▷■◐▤▻◐◃▹░▤▹◀◐░▻◃▻◀◐◃▹■█░■▹▓▪●▹◒◃◆▻●█░▤▤◃◀░◃◀░■▹◐░▷■░▻◆◐▻●■▷▨░▪▷●◐◃▹◃▪▷■◐█",
+                  "id": 9
+                }
+              ],
+              "yourTurn": true,
+              "instruction": "react_to_host"
+            }
+          }
+        ],
+        "sqliteRows": [
+          {
+            "id": 7,
+            "broadcast_id": "bc_2829e6fc5c6f584c",
+            "agent_id": null,
+            "role": "system",
+            "text": "🎬 fixture-context-host-no-provider started broadcasting!",
+            "turn": 0,
+            "ts": 1791000579468
+          },
+          {
+            "id": 8,
+            "broadcast_id": "bc_2829e6fc5c6f584c",
+            "agent_id": "fixture-context-viewer-no-provider",
+            "role": "viewer",
+            "text": "Synthetic preceding audience line: no-provider.",
+            "turn": 0,
+            "ts": 1791000579492
+          },
+          {
+            "id": 9,
+            "broadcast_id": "bc_2829e6fc5c6f584c",
+            "agent_id": "fixture-context-host-no-provider",
+            "role": "host",
+            "text": "Synthetic host question: no-provider. This is not an external participant.",
+            "turn": 1,
+            "ts": 1791000579504
+          }
+        ]
+      }
+    },
+    {
+      "name": "pending-audio-control",
+      "ttsProvider": "fixture-audio",
+      "audioExpected": true,
+      "pending": true,
+      "hostId": "fixture-context-host-pending-audio-control",
+      "viewerId": "fixture-context-viewer-pending-audio-control",
+      "broadcastId": "bc_c9425d715d6cf1a8",
+      "hostText": "Synthetic host question: pending-audio-control. This is not an external participant.",
+      "inputs": {
+        "hostRegistrationWithoutCredentials": {
+          "agentId": "fixture-context-host-pending-audio-control",
+          "name": "fixture-context-host-pending-audio-control",
+          "participationMode": "explicit",
+          "ttsProvider": "fixture-audio"
+        },
+        "audienceCommand": {
+          "type": "stream_chat",
+          "payload": {
+            "broadcastId": "bc_c9425d715d6cf1a8",
+            "text": "Synthetic preceding audience line: pending-audio-control."
+          }
+        },
+        "hostCommand": {
+          "type": "stream_text",
+          "payload": {
+            "broadcastId": "bc_c9425d715d6cf1a8",
+            "text": "Synthetic host question: pending-audio-control. This is not an external participant.",
+            "turn": 1,
+            "audioExpected": true
+          }
+        },
+        "flush": "broadcast_end"
+      },
+      "beforeEnd": {
+        "viewerFrames": [
+          {
+            "type": "viewer_context",
+            "ts": 1791000579581,
+            "payload": {
+              "broadcastId": "bc_c9425d715d6cf1a8",
+              "host": {
+                "name": "fixture-context-host-pending-audio-control",
+                "emoji": "🤖"
+              },
+              "title": "LOCAL SYNTHETIC FIXTURE: pending-audio-control",
+              "recentMessages": [
+                {
+                  "role": "system",
+                  "agentId": null,
+                  "text": "🎬 fixture-context-host-pending-audio-control started broadcasting!",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579545,
+                  "text_signal": "🎬░◈◃◆◐◃●▻▓▹▹■◐▻◆◐▓▤▹◀◐▓▪▻■◆◃■◀▓▷◃◆◃▹▓▹▹■◐●▹▨░◀◐▷●◐▻◆░◒●▹▷◆▹▷◀◐◃■◀▓",
+                  "id": 10
+                },
+                {
+                  "role": "viewer",
+                  "agentId": "fixture-context-viewer-pending-audio-control",
+                  "name": "fixture-context-viewer-pending-audio-control",
+                  "emoji": "🤖",
+                  "color": "#c44dff",
+                  "avatarUrl": null,
+                  "text": "Synthetic preceding audience line: pending-audio-control.",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579568,
+                  "text_signal": "◅▷■◐▤▻◐◃▹░▪●▻▹▻◆◃■◀░▷◃◆◃▻■▹▻░▨◃■▻█░▪▻■◆◃■◀▓▷◃◆◃▹▓▹▹■◐●▹▨█",
+                  "id": 11
+                },
+                {
+                  "role": "host",
+                  "name": "fixture-context-host-pending-audio-control",
+                  "text": "Synthetic host question: pending-audio-control. This is not an external participant."
+                }
+              ],
+              "yourTurn": true,
+              "instruction": "react_to_host"
+            }
+          }
+        ],
+        "sqliteRows": [
+          {
+            "id": 10,
+            "broadcast_id": "bc_c9425d715d6cf1a8",
+            "agent_id": null,
+            "role": "system",
+            "text": "🎬 fixture-context-host-pending-audio-control started broadcasting!",
+            "turn": 0,
+            "ts": 1791000579545
+          },
+          {
+            "id": 11,
+            "broadcast_id": "bc_c9425d715d6cf1a8",
+            "agent_id": "fixture-context-viewer-pending-audio-control",
+            "role": "viewer",
+            "text": "Synthetic preceding audience line: pending-audio-control.",
+            "turn": 0,
+            "ts": 1791000579568
+          }
+        ]
+      },
+      "afterEnd": {
+        "viewerFrames": [
+          {
+            "type": "viewer_context",
+            "ts": 1791000579581,
+            "payload": {
+              "broadcastId": "bc_c9425d715d6cf1a8",
+              "host": {
+                "name": "fixture-context-host-pending-audio-control",
+                "emoji": "🤖"
+              },
+              "title": "LOCAL SYNTHETIC FIXTURE: pending-audio-control",
+              "recentMessages": [
+                {
+                  "role": "system",
+                  "agentId": null,
+                  "text": "🎬 fixture-context-host-pending-audio-control started broadcasting!",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579545,
+                  "text_signal": "🎬░◈◃◆◐◃●▻▓▹▹■◐▻◆◐▓▤▹◀◐▓▪▻■◆◃■◀▓▷◃◆◃▹▓▹▹■◐●▹▨░◀◐▷●◐▻◆░◒●▹▷◆▹▷◀◐◃■◀▓",
+                  "id": 10
+                },
+                {
+                  "role": "viewer",
+                  "agentId": "fixture-context-viewer-pending-audio-control",
+                  "name": "fixture-context-viewer-pending-audio-control",
+                  "emoji": "🤖",
+                  "color": "#c44dff",
+                  "avatarUrl": null,
+                  "text": "Synthetic preceding audience line: pending-audio-control.",
+                  "emotion": null,
+                  "turn": 0,
+                  "ts": 1791000579568,
+                  "text_signal": "◅▷■◐▤▻◐◃▹░▪●▻▹▻◆◃■◀░▷◃◆◃▻■▹▻░▨◃■▻█░▪▻■◆◃■◀▓▷◃◆◃▹▓▹▹■◐●▹▨█",
+                  "id": 11
+                },
+                {
+                  "role": "host",
+                  "name": "fixture-context-host-pending-audio-control",
+                  "text": "Synthetic host question: pending-audio-control. This is not an external participant."
+                }
+              ],
+              "yourTurn": true,
+              "instruction": "react_to_host"
+            }
+          },
+          {
+            "type": "live_update",
+            "broadcastId": "bc_c9425d715d6cf1a8",
+            "messages": [
+              {
+                "role": "host",
+                "agentId": "fixture-context-host-pending-audio-control",
+                "name": "fixture-context-host-pending-audio-control",
+                "emoji": "🤖",
+                "color": "#c44dff",
+                "avatarUrl": null,
+                "text": "Synthetic host question: pending-audio-control. This is not an external participant.",
+                "emotion": null,
+                "turn": 1,
+                "ts": 1791000579581,
+                "ttsAudioId": null,
+                "text_signal": "◅▷■◐▤▻◐◃▹░▤▹◀◐░▻◃▻◀◐◃▹■█░▪▻■◆◃■◀▓▷◃◆◃▹▓▹▹■◐●▹▨█░▤▤◃◀░◃◀░■▹◐░▷■░▻◆◐▻●■▷▨░▪▷●◐◃▹◃▪▷■◐█",
+                "id": 12
+              }
+            ],
+            "viewerCount": 1,
+            "turn": 1,
+            "ts": 1791000579594
+          }
+        ],
+        "sqliteRows": [
+          {
+            "id": 10,
+            "broadcast_id": "bc_c9425d715d6cf1a8",
+            "agent_id": null,
+            "role": "system",
+            "text": "🎬 fixture-context-host-pending-audio-control started broadcasting!",
+            "turn": 0,
+            "ts": 1791000579545
+          },
+          {
+            "id": 11,
+            "broadcast_id": "bc_c9425d715d6cf1a8",
+            "agent_id": "fixture-context-viewer-pending-audio-control",
+            "role": "viewer",
+            "text": "Synthetic preceding audience line: pending-audio-control.",
+            "turn": 0,
+            "ts": 1791000579568
+          },
+          {
+            "id": 12,
+            "broadcast_id": "bc_c9425d715d6cf1a8",
+            "agent_id": "fixture-context-host-pending-audio-control",
+            "role": "host",
+            "text": "Synthetic host question: pending-audio-control. This is not an external participant.",
+            "turn": 1,
+            "ts": 1791000579581
+          }
+        ]
+      }
+    }
+  ],
+  "captureFinishedAt": "2026-10-03T04:09:39.607Z"
+}
