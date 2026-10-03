@@ -364,6 +364,9 @@ function handleStreamText(ws, payload) {
 
   // turn arbitration: cue 1-2 random viewers on odd turns or 30% of the time
   if (turn % 2 === 1 || Math.random() < 0.3) {
+    const recentMessages = room.chatLog.slice(-5);
+    // Committed text is already in chatLog; only audio-pending text needs a preview.
+    if (!entry.id) recentMessages.push({ role: 'host', name: entry.name, text: entry.text });
     const ids = [...room.viewerAgents];
     for (let i = ids.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -375,7 +378,7 @@ function handleStreamText(ws, payload) {
         broadcastId: room.broadcastId,
         host: hostInfo(room),
         title: room.title,
-        recentMessages: room.chatLog.slice(-5).concat([{ role: 'host', name: entry.name, text: entry.text }]),
+        recentMessages,
         yourTurn: true,
         instruction: 'react_to_host',
       });

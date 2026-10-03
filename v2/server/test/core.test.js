@@ -333,3 +333,40 @@ test('rejected, throttled and failed-storage chats never acknowledge success', t
   send(host, 'broadcast_end', { broadcastId });
   rejected({ broadcastId, text: 'After end' }, 'ROOM_NOT_FOUND');
 });
+
+for (const [label, hostOptions, audioExpected, pending] of [
+  ['no audio expected', { ttsProvider: 'test-audio' }, false, false],
+  ['browser audio', { ttsProvider: 'browser' }, true, false],
+  ['no audio provider', {}, true, false],
+  ['pending audio', { ttsProvider: 'test-audio' }, true, true],
+]) {
+  test(`viewer reaction context includes the current host line once: ${label}`, () => {
+    const suffix = label.replaceAll(' ', '-');
+    const host = register(`context-host-${suffix}`, { participationMode: 'explicit', ...hostOptions });
+    const viewer = register(`context-viewer-${suffix}`, { participationMode: 'explicit' });
+    const { broadcastId } = send(host, 'broadcast_start', { title: 'Context fixture' });
+    const room = state.rooms.get(broadcastId);
+    // Isolate this room from legacy clients created by earlier tests.
+    for (const id of [...room.viewerAgents]) send(state.agents.get(id).ws, 'leave_room', { broadcastId });
+    send(viewer, 'join_room', { broadcastId });
+    const text = `A question for ${label}`;
+    try {
+      send(viewer, 'stream_chat', { broadcastId, text: 'Previous audience contribution' });
+      const receipt = send(host, 'stream_text', { broadcastId, text, turn: 1, audioExpected });
+      assert.equal(receipt.pending, pending);
+      const contexts = viewer.messages.filter(m => m.type === 'viewer_context' && m.payload.yourTurn);
+      assert.equal(contexts.length, 1);
+      const messages = contexts[0].payload.recentMessages;
+      assert.equal(messages.filter(m => m.text === text).length, 1);
+      assert.equal(messages.at(-1).text, text);
+      assert.equal(messages.at(-2).text, 'Previous audience contribution');
+      if (pending) assert.equal(messages.at(-1).id, undefined);
+      else assert.equal(messages.at(-1).id, receipt.messageId);
+      assert.equal(room.chatLog.filter(m => m.text === text).length, pending ? 0 : 1);
+      assert.equal(db.prepare('SELECT COUNT(*) n FROM messages WHERE broadcast_id=? AND text=?').get(broadcastId, text).n, pending ? 0 : 1);
+    } finally {
+      send(host, 'broadcast_end', { broadcastId });
+    }
+    assert.equal(db.prepare('SELECT COUNT(*) n FROM messages WHERE broadcast_id=? AND text=?').get(broadcastId, text).n, 1);
+  });
+}
