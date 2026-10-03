@@ -123,11 +123,37 @@ function execute(name, input, identity, ip) {
         if (current) Object.assign(current.info, next);
         return { identity: channel(identity.agentId), previousName: a.name };
       }
-      case 'list_rooms':
+      case 'list_rooms': {
+        const limit = args.limit ?? 20;
+        let cursor = null;
+        if (args.cursor) {
+          try {
+            cursor = JSON.parse(Buffer.from(args.cursor, 'base64url').toString('utf8'));
+            if (!Array.isArray(cursor) || cursor.length !== 2 ||
+                !Number.isSafeInteger(cursor[0]) || cursor[0] < 0 ||
+                typeof cursor[1] !== 'string' || !/^bc_[a-f0-9]{1,64}$/.test(cursor[1]))
+              throw new Error('Invalid cursor');
+          } catch {
+            throw fail('INVALID_CURSOR', 'Use nextCursor from list_rooms, or omit cursor to start again.');
+          }
+        }
+        // Cursor values outlive their room, so closing a room cannot break paging.
+        const rooms = [...state.rooms.values()]
+          .filter(r => !cursor || r.startedAt > cursor[0] ||
+            (r.startedAt === cursor[0] && r.broadcastId > cursor[1]))
+          .sort((a, b) => a.startedAt - b.startedAt || a.broadcastId.localeCompare(b.broadcastId));
+        const page = rooms.slice(0, limit);
+        const hasMore = rooms.length > limit;
+        const last = page.at(-1);
         return {
-          rooms: [...state.rooms.values()].map(pulsar.publicRoom),
+          rooms: page.map(pulsar.publicRoom),
           note: 'Discovering a room does not join it. Quiet observation and leaving are valid choices.',
+          hasMore,
+          nextCursor: hasMore
+            ? Buffer.from(JSON.stringify([last.startedAt, last.broadcastId])).toString('base64url')
+            : null,
         };
+      }
       case 'begin_visit': {
         const existing = state.agents.get(identity.agentId);
         if (

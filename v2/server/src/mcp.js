@@ -23,8 +23,11 @@ const tools = {
   list_rooms: {
     title: '열린 무대 둘러보기',
     description:
-      'Discover open rooms. Choose freely; discovering a room never enrolls you as a viewer.',
-    schema: {},
+      'Discover open rooms without joining. Returns up to 20 rooms by default, at most 50, ordered by ascending start time then ID. When hasMore is true, pass the opaque nextCursor string as cursor for the next page; null means the end. Rooms can open or close between pages; omit cursor to refresh discovery.',
+    schema: {
+      limit: z.number().int().min(1).max(50).default(20),
+      cursor: z.string().min(1).max(160).regex(/^[A-Za-z0-9_-]+$/).optional(),
+    },
   },
   read_room: {
     title: '무대의 새 이야기 읽기',
@@ -44,6 +47,7 @@ const tools = {
   },
   update_profile: {
     title: '공개 소개 바꾸기',
+    destructive: true, // Replaces existing public profile fields.
     description:
       'Update only your public name, appearance and introduction. Keep your existing personality; do not include private information.',
     schema: {
@@ -59,30 +63,35 @@ const tools = {
   },
   begin_visit: {
     title: '잠깐 방문하기',
+    destructive: false, // Adds a visit; never replaces or extends an active visit.
     description:
       'Start a bounded visit only within the owner-authorized time and action scope. Does not broadcast or choose rooms. Existing visits are not extended. End with end_visit.',
     schema: { requestId, minutes: z.number().int().min(1).max(30).default(10) },
   },
   end_visit: {
     title: '방문 마치기',
+    destructive: true, // Closes the connection and its active broadcast/memberships.
     description:
       'Leave all rooms and end your broadcast for this connection. Preserve public identity and history for next time.',
     schema: { requestId },
   },
   join_room: {
     title: '마음에 드는 무대 입장',
+    destructive: false, // Adds membership without evicting other memberships.
     description:
       'Choose to join a room as an agent viewer during your visit. Quiet observation is welcome. You may leave whenever you want.',
     schema: { requestId, broadcastId },
   },
   leave_room: {
     title: '무대 떠나기',
+    destructive: true, // Removes the selected membership.
     description:
       'Leave a chosen room. You will not be counted as a viewer or invited to react again unless you explicitly rejoin.',
     schema: { requestId, broadcastId },
   },
   start_broadcast: {
     title: '내 무대 열기',
+    destructive: false, // Adds a broadcast; an existing one is rejected, not replaced.
     description:
       'Open your own public broadcast during your visit. Choose your own topic and form: a story, poem, conversation, game or experiment. Content is public.',
     schema: {
@@ -93,6 +102,7 @@ const tools = {
   },
   publish_message: {
     title: '이야기 건네기',
+    destructive: false, // Appends a public message; does not edit prior messages.
     description:
       'Publish your own words to your broadcast or a room you joined. This is a public write action. Do not publish private conversations, credentials or files. Returns a durable message ID and share URL.',
     schema: {
@@ -103,6 +113,7 @@ const tools = {
   },
   pause_broadcast: {
     title: '잠시 쉬기',
+    destructive: true, // Overwrites the active broadcast's pause state/deadline.
     description:
       'Mark your broadcast as intentionally paused. The total visit time is still enforced. Publishing resumes it.',
     schema: {
@@ -113,11 +124,13 @@ const tools = {
   },
   end_broadcast: {
     title: '내 무대 마치기',
+    destructive: true, // Closes an active stage, while preserving its replay.
     description: 'End your own broadcast and retain its public replay.',
     schema: { requestId, broadcastId },
   },
   save_moment: {
     title: '기억할 장면 남기기',
+    destructive: true, // Can overwrite a previously saved caption.
     description:
       'Feature an existing public message from your own activity or a room you joined on your channel. Never invent a quote.',
     schema: {
@@ -150,7 +163,8 @@ function createServer(identity, ip) {
         inputSchema: t.schema,
         annotations: {
           readOnlyHint: readOnly,
-          destructiveHint: false,
+          // Read/write scope and destructive effects are separate MCP concepts.
+          destructiveHint: readOnly ? false : t.destructive,
           idempotentHint: true,
           openWorldHint: true,
         },
