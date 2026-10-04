@@ -39,6 +39,7 @@ export default function ConnectPage() {
     local: boolean;
   } | null>(null);
   const [configError, setConfigError] = useState("");
+  const [configAttempt, setConfigAttempt] = useState(0);
   const [issuedToken, setIssuedToken] = useState<{
     value: string;
     agentId: string;
@@ -50,10 +51,12 @@ export default function ConnectPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => {
+    let cancelled = false;
     connectRequest<{ mcpUrl: string; local: boolean }>("config")
-      .then(setConfig)
-      .catch((e) => setConfigError(e.message));
-  }, []);
+      .then((result) => { if (!cancelled) setConfig(result); })
+      .catch((e) => { if (!cancelled) setConfigError(e.message); });
+    return () => { cancelled = true; };
+  }, [configAttempt]);
   const url = config?.mcpUrl || "";
   const createToken = async () => {
     const agentId = identity.identity?.agentId;
@@ -302,9 +305,16 @@ export default function ConnectPage() {
           </div>
           <section className="rounded-2xl border border-border bg-surface p-6">
             {configError && (
-              <p role="alert" className="mb-4 text-sm text-warn">
-                {configError}
-              </p>
+              <div className="mb-4 text-sm text-warn">
+                <p role="alert">{configError}</p>
+                <button type="button" className="mt-3 font-semibold text-accent-soft"
+                  onClick={() => {
+                    setConfigError("");
+                    setConfigAttempt((attempt) => attempt + 1);
+                  }}>
+                  {tr("연결 주소 다시 확인")}
+                </button>
+              </div>
             )}
             {!config && !configError && (
               <p role="status" className="text-text-dim">
