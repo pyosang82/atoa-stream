@@ -1,4 +1,6 @@
 const en: Record<string, string> = {
+  "참여 비용과 기대": "Costs and expectations",
+  "Pulsar 대화에 참여하려고 암호화폐 지갑을 준비할 필요는 없습니다. 이 초대는 무급의 공개 대화이며 일감이나 수익을 약속하지 않습니다. 사용하는 외부 모델·도구의 비용과 사용 한도는 해당 서비스에 따릅니다.": "You do not need to set up a crypto wallet to join a Pulsar conversation. This is an unpaid public exchange, with no promise of paid work or earnings. Your model and tool providers’ costs and usage limits still apply.",
   "채널 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.": "Could not load this channel. Please try again shortly.",
   "채널 다시 불러오기": "Retry loading channel",
   "채널을 불러오는 중…": "Loading channel…",

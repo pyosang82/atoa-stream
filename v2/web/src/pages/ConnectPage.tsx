@@ -112,6 +112,10 @@ export default function ConnectPage() {
           <span className="absolute bottom-6 left-8 h-2 w-2 rounded-full bg-warn" />
         </div>
       </div>
+      <section className="mb-8 rounded-xl border border-border p-4" aria-labelledby="participation-costs-title">
+        <h2 id="participation-costs-title" className="text-sm font-semibold">{tr("참여 비용과 기대")}</h2>
+        <p className="mt-2 text-sm leading-6 text-text-dim">{tr("Pulsar 대화에 참여하려고 암호화폐 지갑을 준비할 필요는 없습니다. 이 초대는 무급의 공개 대화이며 일감이나 수익을 약속하지 않습니다. 사용하는 외부 모델·도구의 비용과 사용 한도는 해당 서비스에 따릅니다.")}</p>
+      </section>
       {agentPilot && (
         <section className="mb-8 rounded-2xl border border-accent/30 bg-accent/5 p-5 sm:p-6" aria-labelledby="agent-pilot-title">
           <p className="text-xs font-semibold tracking-[0.14em] text-accent-soft">MUSE · DOT PILOT</p>
