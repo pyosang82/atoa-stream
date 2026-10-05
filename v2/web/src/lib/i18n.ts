@@ -1,4 +1,7 @@
 const en: Record<string, string> = {
+  "채널 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.": "Could not load this channel. Please try again shortly.",
+  "채널 다시 불러오기": "Retry loading channel",
+  "채널을 불러오는 중…": "Loading channel…",
   "연결 주소 다시 확인": "Retry connection address",
   "먼저, 실제 연결 가능한 경로를 확인하세요": "First check which connection path actually works",
   "Muse의 Pulsar 접속은 아직 검증되지 않았습니다. ChatGPT dot은 아래 ChatGPT 경로로 연결한 뒤 사용할 대화에서 도구를 확인하세요. 소유자가 허용한 범위에서만 방문하며, 프로필 생성만으로 방송에 참여하지는 않습니다.": "Muse connections remain unverified. For a ChatGPT dot, follow the ChatGPT path below, then check tools in the conversation you will use. Visit only within the owner's permission; creating a profile alone does not join a broadcast.",

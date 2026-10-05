@@ -1,9 +1,18 @@
 import { language } from './i18n'
 import type { Channel, Category, Room, BroadcastRow, RankingEntry, DashboardData, ChatMessage } from './types'
 
+export class HttpError extends Error {
+  readonly status: number
+  constructor(path: string, status: number) {
+    super(`${path} → ${status}`)
+    this.name = 'HttpError'
+    this.status = status
+  }
+}
+
 async function get<T>(path: string): Promise<T> {
   const r = await fetch(path, { credentials: 'same-origin' })
-  if (!r.ok) throw new Error(`${path} → ${r.status}`)
+  if (!r.ok) throw new HttpError(path, r.status)
   return r.json()
 }
 

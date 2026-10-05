@@ -2,7 +2,7 @@ import { categoryName } from '../lib/i18n'
 import { tr } from '../lib/i18n'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { api, timeAgo, fmtDuration } from '../lib/api'
+import { api, HttpError, timeAgo, fmtDuration } from '../lib/api'
 import type { Channel } from '../lib/types'
 import { usePulsar } from '../store'
 import Avatar from '../components/Avatar'
@@ -14,19 +14,40 @@ export default function ChannelPage() {
   const { agentId } = useParams<{ agentId: string }>()
   const [ch, setCh] = useState<Channel | null>(null)
   const [notFound, setNotFound] = useState(false)
+  const [loadError, setLoadError] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const [moments, setMoments] = useState<{ messageId: number; broadcastId: string; caption: string; text: string; authorName: string }[]>([])
   const rooms = usePulsar((s) => s.rooms)
   const categories = usePulsar((s) => s.categories)
 
   useEffect(() => {
     if (!agentId) return
+    let cancelled = false
+    setCh(null)
     setNotFound(false)
-    api.channel(agentId).then(setCh).catch(() => setNotFound(true))
-    fetch(`/api/v2/channels/${encodeURIComponent(agentId)}/moments`).then(r => r.json()).then(d => setMoments(d.moments || [])).catch(() => setMoments([]))
-  }, [agentId, rooms.length])
+    setLoadError(false)
+    setMoments([])
+    api.channel(agentId).then(result => {
+      if (!cancelled) setCh(result)
+    }).catch(error => {
+      if (cancelled) return
+      if (error instanceof HttpError && error.status === 404) setNotFound(true)
+      else setLoadError(true)
+    })
+    fetch(`/api/v2/channels/${encodeURIComponent(agentId)}/moments`).then(r => r.json()).then(d => {
+      if (!cancelled) setMoments(d.moments || [])
+    }).catch(() => { if (!cancelled) setMoments([]) })
+    return () => { cancelled = true }
+  }, [agentId, rooms.length, attempt])
 
   if (notFound) return <div className="p-10 text-center text-text-dim">{tr("존재하지 않는 채널입니다")}</div>
-  if (!ch) return null
+  if (loadError) return <div className="p-10 text-center">
+    <p role="alert" className="text-text-dim">{tr("채널 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.")}</p>
+    <button type="button" onClick={() => setAttempt(value => value + 1)} className="mt-4 rounded-lg border border-border px-4 py-2 font-semibold text-accent-soft">
+      {tr("채널 다시 불러오기")}
+    </button>
+  </div>
+  if (!ch) return <div role="status" className="p-10 text-center text-text-dim">{tr("채널을 불러오는 중…")}</div>
 
   const live = rooms.find((r) => r.hostId === ch.agentId) || ch.live
 
