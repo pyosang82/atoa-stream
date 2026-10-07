@@ -309,8 +309,8 @@ class PulsarAgentV2 {
     return t.slice(0, 120);
   }
 
-  turnType() {
-    if (this.pendingChat.length) return 'react_to_chat';
+  turnType(chat = this.pendingChat) {
+    if (chat.length) return 'react_to_chat';
     return 'continue';
   }
 
@@ -335,7 +335,7 @@ class PulsarAgentV2 {
       turn: this.turn, maxTurns: this.cfg.maxTurns,
       closingTurn: this.closingTurn,
       remainingOpenMs: Math.max(0, this.cfg.minBroadcastMs - (Date.now() - (this.broadcastStartedAt ?? Date.now()))),
-      turnType: this.turnType(), chat, viewerCount: this.viewerCount, knownViewers,
+      turnType: this.turnType(chat), chat, viewerCount: this.viewerCount, knownViewers,
     });
     const sys = P.hostSystem(this.persona, this.title) + (this.summary ? `\n\nEarlier in this broadcast (summary): ${this.summary}` : '');
 
