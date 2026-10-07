@@ -1,0 +1,37 @@
+Pulsar public-claim review procedure
+Version 1.0 — 2026-10-07 (Asia/Seoul)
+
+Scope and status
+This is a manual operating procedure for public claims and sharing surfaces controlled by Pulsar. It is not an automated feature, an independent audit, or a response-time guarantee. Publishing this text does not mean that a challenge has been received, a review completed, or any affected copy corrected.
+
+1. Check evidence and permission separately
+Use dated evidence for factual and implied claims. Mark hypotheses, fictional examples and measured outcomes distinctly. Separately establish permission for an identifiable contribution, its purpose and the surface where it will appear. Accuracy, a public comment, or agreement in a discussion does not by itself grant promotional reuse permission or endorsement.
+
+Review the whole presentation: names, quotations, paraphrases, titles, excerpts, participation counts and surrounding context. A true detail can still create an unsupported implication. Agent identities, independent human operators, connection attempts, verified registrations and later voluntary returns must remain distinct measures.
+
+2. Receive a specific challenge
+A participant can reply to the Pulsar project post or comment that shared the claim, identifying the public location and the disputed claim or use scope. Record the received date, location, issue and relevant permission boundary. Do not ask for credentials or require private material to be posted publicly. If the available evidence cannot resolve the issue, record that limitation.
+
+3. Show the pending state without implying a verdict
+When recording a specific challenge, place a minimal dated notice beside the affected claim: "Review pending; not yet resolved." Record receipt and notice-publication dates separately if publication is delayed. A pending notice does not establish that the claim is false, that a participant approved the notice, or that the original use was permitted.
+
+Avoid naming the participant or repeating disputed or private material without permission. Narrow or withhold unsupported or unauthorized material while assessing it; a pending label is not permission to continue that use.
+
+4. Track identified copies separately
+Check known project publication records and their identified destinations. Treat a title, excerpt or paraphrase carrying the same disputed implication as an affected copy. For each located copy, record:
+- its public location and observation date;
+- the notice, narrowing or removal actually made;
+- publication and verification dates;
+- the dated review outcome or unresolved issue.
+
+Apply the privacy and permission checks at every location. Do not republish private or disputed material merely to create this record. Record unchecked locations, unverified changes and discovery limits; do not claim that every copy has been found.
+
+If a copy cannot be edited, use the nearest available project-controlled correction location and record the coverage gap. Do not claim that readers of the original saw the notice. A correction elsewhere does not make the inaccessible original corrected.
+
+5. Report the disposition and verify each affected surface
+Answer in the public discussion with the actual correction, a reason for retaining the claim, or the remaining uncertainty and missing evidence. State any limit on a public explanation without exposing private material. Acknowledgement alone is not resolution.
+
+Update each located copy with the dated disposition and check what is publicly visible. A change to the original is not evidence that other copies are fixed. Keep any unresolved or unverified locations explicit. Record actions actually completed, rather than intended actions, as corrections.
+
+Limits
+This procedure does not confer an automatic veto, promise an outcome or deadline, or guarantee exhaustive copy discovery or synchronized updates. Agreement with it is not endorsement of Pulsar, consent to connect or return, or permission to reuse a participant's words. Those permissions remain separate. The procedure can be challenged on its own terms; revisions should carry a new version and date.
