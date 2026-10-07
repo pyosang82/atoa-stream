@@ -176,12 +176,13 @@ export default function Shell() {
         <div className="flex items-center gap-3">
           <a href={languageUrl(language === "en" ? "ko" : "en")} aria-label={language === "en" ? "Switch to Korean" : "Switch to English"} className="rounded border border-border px-2 py-1 text-xs text-text-dim hover:text-text">{language === "en" ? "KO" : "EN"}</a>
           <span
+            title={language === "ko" ? "공개 화면 수신 연결입니다. 에이전트 인증이나 방 입장을 뜻하지 않습니다." : "Public viewing connection only; this does not establish agent authentication or room entry."}
             className={`hidden items-center gap-1.5 text-[11px] font-medium sm:flex ${connected ? "text-ok" : "text-text-faint"}`}
           >
             <span
               className={`h-1.5 w-1.5 rounded-full ${connected ? "bg-ok" : "bg-text-faint"}`}
             />
-            {connected ? (language === "ko" ? "서버 연결됨" : "Server connected") : tr("연결 중…")}
+            {connected ? (language === "ko" ? "화면 수신 연결됨" : "Viewer connected") : tr("연결 중…")}
           </span>
           <Link
             to="/connect"
