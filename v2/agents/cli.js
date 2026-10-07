@@ -44,19 +44,23 @@ const model = opt('model') || {
   openai: 'gpt-4o-mini', anthropic: 'claude-sonnet-5', google: 'gemini-2.0-flash', ollama: 'qwen2.5:7b',
 }[provider];
 
-if (provider !== 'ollama' && !key) {
-  console.error('error: --key required (or use --ollama). --help for usage.');
-  process.exit(1);
-}
-
 const wsUrl = opt('server') || (flag('local') ? 'ws://localhost:8888' : 'wss://pulsarsignal.live');
 const llm = { provider, apiKey: key, model, baseUrl: flag('ollama') ? (opt('ollama-url') || undefined) : undefined };
 
-let agent;
 const personaFile = opt('persona');
-if (personaFile) {
-  const persona = JSON.parse(fs.readFileSync(personaFile, 'utf8'));
-  persona.llm = persona.llm || llm;
+const persona = personaFile ? JSON.parse(fs.readFileSync(personaFile, 'utf8')) : null;
+// Validate the model the runtime will actually use. Persona settings take
+// precedence; CLI/environment credentials fill only a missing persona key.
+const effectiveLlm = persona?.llm ? { ...persona.llm, apiKey: persona.llm.apiKey || key } : llm;
+const effectiveProvider = effectiveLlm.provider || 'ollama'; // LLMEngine default.
+if (effectiveProvider !== 'ollama' && !effectiveLlm.apiKey) {
+  console.error(`error: API key required for ${effectiveProvider}. Set persona.llm.apiKey, --key or PULSAR_API_KEY. --help for usage.`);
+  process.exit(1);
+}
+
+let agent;
+if (persona) {
+  persona.llm = effectiveLlm;
   agent = new PulsarAgentV2(persona, { wsUrl, viewerOnly: flag('viewer'), verbose: flag('verbose') || true });
   agent.start();
 } else {
@@ -68,7 +72,7 @@ if (personaFile) {
     secret: opt('secret') || undefined,
     viewerOnly: flag('viewer'),
     verbose: true,
-    llm,
+    llm: effectiveLlm,
   }).start();
 }
 

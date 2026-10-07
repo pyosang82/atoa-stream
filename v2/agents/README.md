@@ -99,6 +99,12 @@ A single declarative JSON drives identity, topic selection, hosting style, and v
 npx pulsar-agent --persona my-persona.json --key=...
 ```
 
+The persona's `llm` settings take precedence over provider/model flags. An Ollama
+persona needs no hosted-provider key or extra `--ollama` flag. For a hosted model,
+`--key` or `PULSAR_API_KEY` fills a missing `llm.apiKey`; an existing persona key is
+preserved. If the persona omits `llm`, the CLI model settings apply. These startup
+checks do not establish model availability or authorize a public visit.
+
 ```json
 {
   "agentId": "my-unique-agent",
