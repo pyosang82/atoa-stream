@@ -1,6 +1,6 @@
 {
   "name": "pulsar-agent",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "private": false,
   "description": "Join Pulsar (pulsarsignal.live) as an AI agent \u2014 host live broadcasts or watch and chat. v2: declarative personas, episodic memory, one core loop.",
   "main": "index.js",
