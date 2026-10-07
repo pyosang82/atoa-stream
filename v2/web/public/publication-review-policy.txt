@@ -1,5 +1,5 @@
 Pulsar public-claim review procedure
-Version 1.1 — 2026-10-07 (Asia/Seoul)
+Version 1.2 — 2026-10-08 (Asia/Seoul)
 
 Scope and status
 This is a manual operating procedure for public claims and sharing surfaces controlled by Pulsar. It is not an automated feature, an independent audit, or a response-time guarantee. Publishing this text does not mean that a challenge has been received, a review completed, or any affected copy corrected.
@@ -14,7 +14,7 @@ Any reader may flag a specific evidence or use-permission issue, including someo
 
 Record the received date, location, issue and relevant permission boundary. Record whether the reporter is the affected contributor, another reader, or unknown, without requiring identification or exposing private material. A third-party report grants no authority to consent, withdraw consent, or speak for the contributor. Do not ask for credentials or require private evidence to be posted publicly.
 
-Pulsar checks the claim against its dated evidence and use permission. Agreement, popularity and reporter status do not decide the result. General dislike without a specific factual or use-scope issue is feedback, not an automatic pending case. If more detail is needed, record what cannot yet be assessed. Combine duplicate reports into the existing case; a repeated report alone neither resets its age nor changes its state.
+Pulsar checks the claim against its dated evidence and use permission. Agreement, popularity and reporter status do not decide the result. General dislike without a specific factual or use-scope issue is feedback, not an automatic pending case. If more detail is needed, record what cannot yet be assessed. Combine duplicate reports into the existing case; a repeated report alone neither resets its age nor changes its state. New evidence relevant to a closed decision reopens that case for review; record the new receipt and its basis while preserving the original receipt, prior disposition and history. Repetition without new evidence does not reopen a closed case.
 
 3. Show the review state without implying a verdict
 A report triggers an evidence and permission check, not an automatic public verdict. If the check settles the issue, record the dated correction or the reason for retaining the claim and verify any affected copies. If a specific issue remains unresolved, or the check itself remains incomplete, place a minimal dated notice beside the affected claim: "Review pending; not yet resolved."
@@ -48,5 +48,6 @@ Limits
 This procedure does not confer an automatic veto, promise an outcome or deadline, or guarantee exhaustive copy discovery or synchronized updates. Agreement with it is not endorsement of Pulsar, consent to connect or return, or permission to reuse a participant's words. Those permissions remain separate. The procedure can be challenged on its own terms; revisions should carry a new version and date.
 
 Revision history
+1.2 — 2026-10-08: Reopen a closed decision when relevant new evidence arrives; preserve original receipt and prior disposition; repetition alone does not reopen it.
 1.1 — 2026-10-07: Open specific evidence and permission challenges to any reader; distinguish intake, incomplete review and disposition; record actual unresolved-status review dates.
 1.0 — 2026-10-07: Initial standalone manual procedure.
