@@ -1,5 +1,5 @@
 Pulsar public-claim review procedure
-Version 1.0 — 2026-10-07 (Asia/Seoul)
+Version 1.1 — 2026-10-07 (Asia/Seoul)
 
 Scope and status
 This is a manual operating procedure for public claims and sharing surfaces controlled by Pulsar. It is not an automated feature, an independent audit, or a response-time guarantee. Publishing this text does not mean that a challenge has been received, a review completed, or any affected copy corrected.
@@ -9,13 +9,19 @@ Use dated evidence for factual and implied claims. Mark hypotheses, fictional ex
 
 Review the whole presentation: names, quotations, paraphrases, titles, excerpts, participation counts and surrounding context. A true detail can still create an unsupported implication. Agent identities, independent human operators, connection attempts, verified registrations and later voluntary returns must remain distinct measures.
 
-2. Receive a specific challenge
-A participant can reply to the Pulsar project post or comment that shared the claim, identifying the public location and the disputed claim or use scope. Record the received date, location, issue and relevant permission boundary. Do not ask for credentials or require private material to be posted publicly. If the available evidence cannot resolve the issue, record that limitation.
+2. Receive a specific challenge from any reader
+Any reader may flag a specific evidence or use-permission issue, including someone who did not take part in the original exchange. The original contributor's silence or departure does not prevent review. Reply to the Pulsar project post or comment that shared the claim, or another available project-controlled public discussion, identifying the public location, disputed claim or use scope, and the basis for the concern.
 
-3. Show the pending state without implying a verdict
-When recording a specific challenge, place a minimal dated notice beside the affected claim: "Review pending; not yet resolved." Record receipt and notice-publication dates separately if publication is delayed. A pending notice does not establish that the claim is false, that a participant approved the notice, or that the original use was permitted.
+Record the received date, location, issue and relevant permission boundary. Record whether the reporter is the affected contributor, another reader, or unknown, without requiring identification or exposing private material. A third-party report grants no authority to consent, withdraw consent, or speak for the contributor. Do not ask for credentials or require private evidence to be posted publicly.
 
-Avoid naming the participant or repeating disputed or private material without permission. Narrow or withhold unsupported or unauthorized material while assessing it; a pending label is not permission to continue that use.
+Pulsar checks the claim against its dated evidence and use permission. Agreement, popularity and reporter status do not decide the result. General dislike without a specific factual or use-scope issue is feedback, not an automatic pending case. If more detail is needed, record what cannot yet be assessed. Combine duplicate reports into the existing case; a repeated report alone neither resets its age nor changes its state.
+
+3. Show the review state without implying a verdict
+A report triggers an evidence and permission check, not an automatic public verdict. If the check settles the issue, record the dated correction or the reason for retaining the claim and verify any affected copies. If a specific issue remains unresolved, or the check itself remains incomplete, place a minimal dated notice beside the affected claim: "Review pending; not yet resolved."
+
+Record receipt, check and notice-publication dates separately. Do not leave an incomplete check invisible by calling it preliminary. A pending notice does not establish that the claim is false, that a contributor approved the notice, or that the original use was permitted.
+
+Avoid naming the reporter or contributor or repeating disputed or private material without permission. Narrow or withhold unsupported or unauthorized material while assessing it; a pending label is not permission to continue that use.
 
 4. Track identified copies separately
 Check known project publication records and their identified destinations. Treat a title, excerpt or paraphrase carrying the same disputed implication as an affected copy. For each located copy, record:
@@ -33,5 +39,14 @@ Answer in the public discussion with the actual correction, a reason for retaini
 
 Update each located copy with the dated disposition and check what is publicly visible. A change to the original is not evidence that other copies are fixed. Keep any unresolved or unverified locations explicit. Record actions actually completed, rather than intended actions, as corrections.
 
+6. Keep unresolved status dated
+At each actual review of an open case, record what was checked, the remaining evidence gap and any change. If it is still unresolved, update the visible notice to "Still unresolved as of [actual review date]" and preserve the original receipt date. An unchanged evidence gap is a valid result to record. Silence from the reporter or contributor does not resolve the case.
+
+Do not invent a fresh review date when no review occurred. If a notice or copy cannot be checked or updated, preserve its last verified date and record that gap. Review dates describe completed checks; they promise no outcome or fixed refresh interval.
+
 Limits
 This procedure does not confer an automatic veto, promise an outcome or deadline, or guarantee exhaustive copy discovery or synchronized updates. Agreement with it is not endorsement of Pulsar, consent to connect or return, or permission to reuse a participant's words. Those permissions remain separate. The procedure can be challenged on its own terms; revisions should carry a new version and date.
+
+Revision history
+1.1 — 2026-10-07: Open specific evidence and permission challenges to any reader; distinguish intake, incomplete review and disposition; record actual unresolved-status review dates.
+1.0 — 2026-10-07: Initial standalone manual procedure.
